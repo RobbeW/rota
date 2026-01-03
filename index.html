@@ -625,6 +625,7 @@
       display:flex;
       gap:1.6rem;
       flex-direction:row;
+      overflow-x:hidden; /* prevents odd horizontal scrollbars */
     }
     .help-left{ width:44%; min-width:240px; max-height:74vh; overflow-y:auto; }
     .help-right{ width:56%; min-width:240px; max-height:74vh; overflow-y:auto; }
@@ -710,6 +711,39 @@
       align-items:center;
       justify-content:space-between;
       gap:10px;
+    }
+
+    /* === PATCH: phone scaling for help modal (no overflow, stack columns) === */
+    @media (max-width: 600px){
+      .help-modal{
+        padding:10px;
+        align-items:flex-start;
+        overflow:auto;
+      }
+
+      .help-content{
+        width:100%;
+        max-width:100%;
+        flex-direction:column;
+        gap:12px;
+        padding:1.1rem 1.0rem 0.9rem 1.0rem;
+        max-height:calc(100vh - 20px);
+        overflow:auto;
+        -webkit-overflow-scrolling:touch;
+      }
+
+      .help-left,
+      .help-right{
+        width:100%;
+        min-width:0;
+        max-height:none;
+        overflow:visible;
+      }
+
+      .close-help{
+        top:0.6rem;
+        right:0.6rem;
+      }
     }
 
     /* Layout modes */
@@ -880,8 +914,11 @@ latin_learning:
       english: "I’m ready. (girl speaking)"
       drill_modes: ["word_order"]
 
+    # === PATCH: keep id-based naming for audio and sequences ===
+    # id stays "finis_ludi" (used for audio filename: finis_ludi.mp3)
+    # diacritics only in display text
     - id: "finis_ludi"
-      latin: "Finis ludi."
+      latin: "Finis lūdī."
       english: "End of the game."
       drill_modes: ["tap_to_confirm"]
 
@@ -1493,7 +1530,6 @@ assets:
       const bg = CFG?.game?.background?.short || "";
       setHTML(helpCulture, bg ? `<b>Achtergrond:</b> ${escapeHtml(bg)}` : "");
 
-  
       if (AUDIO_CFG.enabled && helpLatin){
         helpLatin.querySelectorAll('button[data-audio]').forEach(b => { b.innerHTML = AUDIO_ICON_SVG; });
       }
@@ -1527,7 +1563,6 @@ assets:
       });
     }
 
-    
     helpLatin?.addEventListener('click', async (e) => {
       const btn = e.target.closest('button[data-audio]');
       if (!btn) return;
@@ -1562,13 +1597,14 @@ assets:
 
       doc.text("Speler 2:", margin + 95, 32);
       doc.line(margin + 115, 32, W - margin, 32);
+
       const r  = 45;
       const cx = W / 2;
       const nameY = 32;
-      const gapAfterNames = 14;              
-      const boardTop = nameY + gapAfterNames; 
-      const cy = boardTop + r;               
-      const boardBottom = cy + r;            
+      const gapAfterNames = 14;
+      const boardTop = nameY + gapAfterNames;
+      const cy = boardTop + r;
+      const boardBottom = cy + r;
 
       doc.setLineWidth(0.6);
       doc.circle(cx, cy, r);
@@ -2570,7 +2606,6 @@ assets:
       startSequence(seq);
     }
 
-  
     const LAST_PRACTICE_KEY = "rota_last_practice_phrase_v1";
     state.lastPracticePhraseId = localStorage.getItem(LAST_PRACTICE_KEY) || null;
 
@@ -2648,5 +2683,3 @@ assets:
   </script>
 </body>
 </html>
-
-
