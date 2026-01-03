@@ -1,7 +1,7 @@
 <!doctype html>
 
 <!--Auteur: Robbe Wulgaert / aiindeklas.be-->
-<!-- Copyright 2025 - Gebruik vrij voor educatie mits expliciete naamsvermelding -->
+<!-- Copyright 2026 - Gebruik vrij voor educatie mits expliciete naamsvermelding -->
 
 <html lang="nl">
 <head>
@@ -396,11 +396,42 @@
       color:var(--muted);
       letter-spacing:0.2px;
     }
+
+    /* Prompt row with audio button */
+    .promptRow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
     .promptMain{
       font-size:1.35rem;
       font-weight:900;
       color:var(--ink);
+      flex:1;
+      min-width:0;
     }
+
+    .audio-btn{
+      width:42px;
+      height:42px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:#fff;
+      cursor:pointer;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      box-shadow:0 1px 10px rgba(0,0,0,0.03);
+      flex:0 0 auto;
+    }
+    .audio-btn:active{ transform:translateY(1px); }
+    .audio-btn:hover{ border-color:#d7d2fb; }
+    .audio-btn svg{ width:20px; height:20px; fill: var(--brand-purple); }
+    .audio-btn.playing{ outline: 3px solid rgba(82,0,255,0.16); border-color: transparent; }
+    .audio-btn.small{ width:34px; height:34px; border-radius:10px; }
+    .audio-btn.small svg{ width:18px; height:18px; }
+
     .hintToggleRow{
       display:flex;
       align-items:center;
@@ -449,6 +480,39 @@
     .choice:hover{ border-color:#d7d2fb; }
     .choice.correct{ outline: 3px solid rgba(61,255,208,0.55); border-color: transparent; }
     .choice.wrong{ outline: 3px solid rgba(255, 77, 77, 0.45); }
+
+    /* Choice with audio (mcq_response) */
+    .choice.with-audio{
+      justify-content:space-between;
+      text-align:left;
+      gap:10px;
+    }
+    .choice .choice-left{
+      display:flex;
+      flex-direction:column;
+      gap:3px;
+      align-items:flex-start;
+      min-width:0;
+      flex:1;
+    }
+    .choice .choice-left b{
+      font-weight:900;
+    }
+    .choice .choice-audio{
+      width:38px;
+      height:38px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:#fff;
+      cursor:pointer;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      flex:0 0 auto;
+      box-shadow:0 1px 10px rgba(0,0,0,0.02);
+    }
+    .choice .choice-audio:active{ transform:translateY(1px); }
+    .choice .choice-audio svg{ width:18px; height:18px; fill: var(--brand-purple); }
 
     .inputRow{
       display:flex;
@@ -641,6 +705,13 @@
       cursor:pointer;
     }
 
+    .helpLatinCell{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+
     /* Layout modes */
     body.mode-desktop .main{ grid-template-columns: 320px minmax(280px, 1fr) 320px; }
     body.mode-desktop .tabletTop, body.mode-desktop .tabletBottom{ display:none; }
@@ -660,9 +731,8 @@
       box-shadow: var(--shadow);
       padding:12px;
     }
-    /* tabletop: speler 2 bovenaan omgekeerd */
     body.mode-tablet .tabletTop{ transform: rotate(180deg); }
-    body.mode-tablet .tabletTop .playerCard{ transform: rotate(180deg); } /* tekst leesbaar */
+    body.mode-tablet .tabletTop .playerCard{ transform: rotate(180deg); }
     body.mode-tablet .help-btn{
       right:18px;
       bottom:50%;
@@ -703,7 +773,7 @@
 </head>
 
 <body>
-  <!-- YAML in-file for traceability -->
+
   <script id="rota-yaml" type="text/plain">
 meta:
   project: "Rota"
@@ -841,7 +911,7 @@ latin_learning:
     post_match_sequence:
       steps:
         - phrase_id: "finis_ludi"
-          drill: { type: "tap_to_confirm" }
+          drill: { type: "read_aloud" }
         - outcome_branch:
             winner:
               phrase_id: "vinco"
@@ -866,7 +936,9 @@ latin_learning:
 
 assets:
   audio:
-    enabled: false
+    enabled: true
+    base_path: "./media/"
+    naming: "{id}.mp3"
     files: []
   </script>
 
@@ -881,13 +953,9 @@ assets:
           <span class="dot" id="turn-dot"></span>
           <span><b>Aan zet:</b> <span id="turn-name">—</span></span>
         </div>
-        <!--<div class="pill" id="pill-phase">
-          <span><b>Fase:</b> <span id="phase-name">—</span></span>
-        </div> -->
         <button class="btn" id="btn-reset" type="button">Nieuw spel</button>
       </div>
     </header>
-
 
     <section class="tabletTop" id="tabletTop">
       <div class="playerCard" id="t-card-p2">
@@ -990,8 +1058,8 @@ assets:
 
         <h3>Latijn</h3>
         <div class="phaseBox">
-          <b>Micro-oefeningen:</b> start + einde van het spel.<br>
-          <span class="muted">Alle zinnen blijven bereikbaar via de <b>?</b>.</span>
+          <b>Kleine oefeningen:</b> Aan de start en het einde van het spel.<br>
+          <span class="muted">Wil je meer oefeningen? Alle zinnen en extra uitdagingen vind je via de <b>?-knop</b>.</span>
         </div>
       </aside>
     </main>
@@ -1049,15 +1117,13 @@ assets:
       <div class="help-right">
         <h2>Latijnse zinnen</h2>
         <div class="helpActions" style="margin-top:-4px;">
-          <button class="btn primary" id="btn-practice" type="button">Oefen 1 zin</button>
+          <button class="btn primary" id="btn-practice" type="button">Oefen een zin</button>
         </div>
         <div style="height:10px"></div>
         <div id="help-latin"></div>
-
       </div>
     </div>
   </div>
-
 
   <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="overlay-title">
     <div class="overlayCard" role="document">
@@ -1068,7 +1134,11 @@ assets:
 
       <div class="promptBox">
         <div class="promptTitle" id="promptTitle">—</div>
-        <div class="promptMain" id="promptMain">—</div>
+
+        <div class="promptRow">
+          <div class="promptMain" id="promptMain">—</div>
+          <button class="audio-btn" id="btn-audio" type="button" aria-label="Luister naar uitspraak"></button>
+        </div>
 
         <div class="hintToggleRow">
           <div class="hintText" id="promptHint"></div>
@@ -1085,14 +1155,10 @@ assets:
     </div>
   </div>
 
-  <!-- libs -->
   <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 
   <script>
-    /* =========================
-       Safe setters (null-safe)
-    ========================= */
     function setText(el, txt){ if (el) el.textContent = txt; }
     function setHTML(el, html){ if (el) el.innerHTML = html; }
     function setToggle(el, cls, on){ if (el) el.classList.toggle(cls, !!on); }
@@ -1103,9 +1169,6 @@ assets:
       }[m]));
     }
 
-    /* =========================
-       NL gloss (student-facing)
-    ========================= */
     const NL_GLOSS = {
       salve: "Hallo (enkelvoud).",
       mihi_nomen_est: "Mijn naam is …",
@@ -1134,9 +1197,6 @@ assets:
       overlay_practice: "Oefenen"
     };
 
-    /* =========================
-       Load YAML -> CFG
-    ========================= */
     function loadCfgFromYaml(){
       const raw = document.getElementById('rota-yaml').textContent.trim();
       const cfg = jsyaml.load(raw) || {};
@@ -1157,9 +1217,6 @@ assets:
     const CFG = loadCfgFromYaml();
     window.ROTA_CFG = CFG;
 
-    /* =========================
-       Theme sync
-    ========================= */
     function applyTheme(cfg){
       const c = cfg?.theme?.colors || {};
       const root = document.documentElement.style;
@@ -1190,8 +1247,104 @@ assets:
     applyTheme(CFG);
 
     /* =========================
-       Layout mode detection + override
+       Audio (uitspraak)
     ========================= */
+    const AUDIO_CFG = {
+      enabled: !!(CFG?.assets?.audio?.enabled),
+      basePath: String(CFG?.assets?.audio?.base_path || "./media/"),
+      naming: String(CFG?.assets?.audio?.naming || "{id}.mp3")
+    };
+
+    const AUDIO_ICON_SVG = `
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M3 10v4c0 .55.45 1 1 1h3l4.5 3.6c.66.53 1.5.06 1.5-.75V5.15c0-.81-.84-1.28-1.5-.75L7 8H4c-.55 0-1 .45-1 1zm14.5 2c0-1.77-1.02-3.29-2.5-4.03v8.06c1.48-.74 2.5-2.26 2.5-4.03zM15 3.23v2.06c2.89 1 5 3.77 5 6.71s-2.11 5.71-5 6.71v2.06c4.01-1.06 7-4.7 7-8.77s-2.99-7.71-7-8.77z"/>
+      </svg>
+    `;
+
+    const audioCache = new Map();
+    let currentAudio = null;
+    let currentAudioBtn = null;
+
+    function getPhraseById(id){
+      return (CFG?.latin_learning?.phrases || []).find(p => p.id === id) || null;
+    }
+
+    function phraseAudioFile(phrase){
+      if (!phrase) return null;
+      if (phrase.audio_file) return String(phrase.audio_file).trim();
+      return AUDIO_CFG.naming.replace("{id}", phrase.id) || (phrase.id + ".mp3");
+    }
+
+    function audioUrlForPhraseId(phraseId){
+      if (!AUDIO_CFG.enabled) return null;
+      const p = getPhraseById(phraseId);
+      const file = phraseAudioFile(p);
+      if (!file) return null;
+      const base = AUDIO_CFG.basePath.endsWith("/") ? AUDIO_CFG.basePath : (AUDIO_CFG.basePath + "/");
+      return base + file;
+    }
+
+    async function playAudioUrl(url, btnEl){
+      if (!url) return;
+
+      if (currentAudio){
+        try{ currentAudio.pause(); currentAudio.currentTime = 0; }catch(e){}
+        currentAudio = null;
+      }
+      if (currentAudioBtn){
+        currentAudioBtn.classList.remove("playing");
+        currentAudioBtn = null;
+      }
+
+      let a = audioCache.get(url);
+      if (!a){
+        a = new Audio(url);
+        a.preload = "auto";
+        audioCache.set(url, a);
+      }
+
+      currentAudio = a;
+      currentAudioBtn = btnEl || null;
+      if (currentAudioBtn) currentAudioBtn.classList.add("playing");
+
+      a.onended = () => {
+        if (currentAudioBtn) currentAudioBtn.classList.remove("playing");
+        currentAudio = null;
+        currentAudioBtn = null;
+      };
+
+      try{
+        await a.play();
+      }catch(e){
+        if (currentAudioBtn) currentAudioBtn.classList.remove("playing");
+        currentAudio = null;
+        currentAudioBtn = null;
+        console.warn("Audio play blocked/missing:", url, e);
+      }
+    }
+
+    function wireAudioButton(btnEl, phraseId){
+      if (!btnEl) return;
+
+      btnEl.innerHTML = AUDIO_ICON_SVG;
+
+      if (!AUDIO_CFG.enabled || !phraseId){
+        btnEl.style.display = "none";
+        btnEl.onclick = null;
+        return;
+      }
+
+      const url = audioUrlForPhraseId(phraseId);
+      btnEl.style.display = url ? "" : "none";
+
+      btnEl.onclick = async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const u = audioUrlForPhraseId(phraseId);
+        await playAudioUrl(u, btnEl);
+      };
+    }
+
     const MODE_KEY = "rota_mode_override_v1";
 
     function getModeOverride(){
@@ -1229,9 +1382,6 @@ assets:
     window.addEventListener('resize', setModeClass);
     setModeClass();
 
-    /* =========================
-       Progress store
-    ========================= */
     const STORE_KEY = CFG?.latin_learning?.practice_engine?.persistence?.store_key || "rota_latin_progress_v1";
     function nowIso(){ return new Date().toISOString(); }
 
@@ -1277,9 +1427,6 @@ assets:
       return pr.correct / total;
     }
 
-    /* =========================
-       Help modal rendering (NL only)
-    ========================= */
     const helpBtn  = document.getElementById('help-btn');
     const helpModal= document.getElementById('help-modal');
     const closeHelp= document.getElementById('close-help');
@@ -1313,12 +1460,23 @@ assets:
 
     function renderLatinTable(cfg){
       const phrases = cfg?.latin_learning?.phrases || [];
-      const rows = phrases.map(p => `
-        <tr>
-          <td><b>${escapeHtml(p.latin || "")}</b></td>
-          <td>${escapeHtml(p.nl || "")}</td>
-        </tr>
-      `).join('');
+      const rows = phrases.map(p => {
+        const audioBtn = AUDIO_CFG.enabled
+          ? `<button class="audio-btn small" type="button" data-audio="${escapeHtml(p.id)}" aria-label="Luister"></button>`
+          : "";
+
+        return `
+          <tr>
+            <td>
+              <div class="helpLatinCell">
+                <b>${escapeHtml(p.latin || "")}</b>
+                ${audioBtn}
+              </div>
+            </td>
+            <td>${escapeHtml(p.nl || "")}</td>
+          </tr>
+        `;
+      }).join('');
 
       return `
         <table>
@@ -1337,6 +1495,11 @@ assets:
       setHTML(helpLatin, renderLatinTable(CFG));
       const bg = CFG?.game?.background?.short || "";
       setHTML(helpCulture, bg ? `<b>Achtergrond:</b> ${escapeHtml(bg)}` : "");
+
+      // Inject icon SVG into newly-rendered buttons
+      if (AUDIO_CFG.enabled && helpLatin){
+        helpLatin.querySelectorAll('button[data-audio]').forEach(b => { b.innerHTML = AUDIO_ICON_SVG; });
+      }
 
       const ov = getModeOverride();
       if (modeSelect) modeSelect.value = ov;
@@ -1367,9 +1530,16 @@ assets:
       });
     }
 
-    /* =========================
-       Printable PDF (Help modal)
-    ========================= */
+    // Delegated audio handler (help table)
+    helpLatin?.addEventListener('click', async (e) => {
+      const btn = e.target.closest('button[data-audio]');
+      if (!btn) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const pid = btn.getAttribute('data-audio');
+      await playAudioUrl(audioUrlForPhraseId(pid), btn);
+    });
+
     const btnPrintable = document.getElementById('btn-printable');
 
     function buildPrintablePdf(){
@@ -1395,10 +1565,13 @@ assets:
 
       doc.text("Speler 2:", margin + 95, 32);
       doc.line(margin + 115, 32, W - margin, 32);
-
-      const cx = W / 2;
-      const cy = 70;
       const r  = 45;
+      const cx = W / 2;
+      const nameY = 32;
+      const gapAfterNames = 14;              
+      const boardTop = nameY + gapAfterNames; 
+      const cy = boardTop + r;               
+      const boardBottom = cy + r;            
 
       doc.setLineWidth(0.6);
       doc.circle(cx, cy, r);
@@ -1421,7 +1594,7 @@ assets:
       doc.setLineWidth(0.4);
       for (const p of pts) doc.circle(p.x, p.y, 2);
 
-      let y = 124;
+      let y = Math.max(124, boardBottom + 14);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(12);
       doc.text("Kernregels", margin, y);
@@ -1500,9 +1673,6 @@ assets:
       }
     });
 
-    /* =========================
-       Board geometry + game logic
-    ========================= */
     const nodesG  = document.getElementById('nodes');
     const piecesG = document.getElementById('pieces');
 
@@ -1624,9 +1794,6 @@ assets:
       renderAll();
     }
 
-    /* =========================
-       SVG helpers + render
-    ========================= */
     function clearSvgGroup(g){ while (g.firstChild) g.removeChild(g.firstChild); }
 
     function mk(tag, attrs){
@@ -1698,9 +1865,6 @@ assets:
       });
     }
 
-    /* =========================
-       UI nodes
-    ========================= */
     const elTurnName = document.getElementById('turn-name');
     const elTurnDot  = document.getElementById('turn-dot');
     const elPhaseName= document.getElementById('phase-name');
@@ -1829,7 +1993,6 @@ assets:
       updateTurnClasses();
       updateHints();
 
-      // extra clarity when switching to movement
       if (!state.winner && prevPhase !== state.phase && state.phase === "movement"){
         setText(elActionHint, "Schuiven: klik op jouw stuk, klik dan op een direct verbonden leeg punt (1 stap).");
       }
@@ -1839,9 +2002,6 @@ assets:
     drawNodes();
     renderAll();
 
-    /* =========================
-       Node click handler
-    ========================= */
     function onNodeClick(pid){
       if (state.locked) return;
       if (state.winner) return;
@@ -1884,11 +2044,6 @@ assets:
       }
     }
 
-    /* =========================
-       Micro-drill engine
-       - Removes tautology: never show the answer as the prompt for build tasks.
-       - Hint is hidden behind "Toon hint".
-    ========================= */
     const overlay = document.getElementById('overlay');
     const overlayBody = document.getElementById('overlay-body');
     const overlayNext = document.getElementById('overlay-next');
@@ -1898,6 +2053,7 @@ assets:
     const promptHint  = document.getElementById('promptHint');
     const btnHint     = document.getElementById('btn-hint');
     const overlayNote = document.getElementById('overlay-note');
+    const btnAudio    = document.getElementById('btn-audio');
 
     const btnPractice = document.getElementById('btn-practice');
 
@@ -1912,10 +2068,6 @@ assets:
     }
     function closeOverlay(){
       overlay.classList.remove('active');
-    }
-
-    function getPhraseById(id){
-      return (CFG?.latin_learning?.phrases || []).find(p => p.id === id) || null;
     }
 
     function normalizeAnswer(s){
@@ -1939,11 +2091,13 @@ assets:
       if (promptHint) promptHint.classList.toggle('visible', hintVisible);
     });
 
-    function setPrompt({title, main, hint}){
+    function setPrompt({title, main, hint, phraseIdForAudio}){
       setText(promptTitle, title || "");
       setText(promptMain, main || "—");
       resetHint();
       if (promptHint) promptHint.textContent = hint || "";
+
+      wireAudioButton(btnAudio, phraseIdForAudio || null);
     }
 
     function shuffle(arr){
@@ -1990,7 +2144,6 @@ assets:
           setText(overlayNote, isCorrect ? "Correct." : "Onjuist.");
           overlayNext.disabled = false;
 
-          // show hint only after answering
           hintVisible = true;
           if (promptHint) promptHint.classList.add('visible');
         });
@@ -2003,11 +2156,71 @@ assets:
       const box = document.createElement('div');
       box.className = "phaseBox";
       box.innerHTML = `<b>Bevestig:</b> je herkent de zin.`;
+
       const prog = loadProgress();
       markSeen(prog, phraseId);
       markResult(prog, phraseId, true);
       saveProgress(prog);
+
       return box;
+    }
+
+    function buildReadAloud(phraseId){
+      const wrap = document.createElement('div');
+      wrap.className = "phaseBox";
+
+      const p = document.createElement('div');
+      p.style.fontWeight = "800";
+      p.style.marginBottom = "10px";
+      p.textContent = AUDIO_CFG.enabled
+        ? "Druk op de luidspreker, spreek na, en bevestig pas daarna."
+        : "Lees de zin hardop. Bevestig pas daarna.";
+
+      const row = document.createElement('div');
+      row.className = "inputRow";
+
+      const btn = document.createElement('button');
+      btn.type = "button";
+      btn.className = "btn primary";
+      btn.textContent = "Ik heb het hardop gelezen";
+      btn.disabled = true;
+
+      const info = document.createElement('div');
+      info.className = "note";
+      info.textContent = "Wacht even…";
+
+      row.appendChild(btn);
+      row.appendChild(info);
+
+      wrap.appendChild(p);
+      wrap.appendChild(row);
+
+      overlayNext.disabled = true;
+      overlayNote.textContent = "";
+      let t = 3;
+
+      (function tick(){
+        if (t <= 0){
+          info.textContent = "Bevestig wanneer je klaar bent.";
+          btn.disabled = false;
+          return;
+        }
+        info.textContent = `Lees hardop. (${t})`;
+        t -= 1;
+        setTimeout(tick, 900);
+      })();
+
+      btn.addEventListener('click', () => {
+        const prog = loadProgress();
+        markSeen(prog, phraseId);
+        markResult(prog, phraseId, true);
+        saveProgress(prog);
+
+        overlayNote.textContent = "OK.";
+        overlayNext.disabled = false;
+      });
+
+      return wrap;
     }
 
     function buildFillBlankName(){
@@ -2063,8 +2276,28 @@ assets:
       for (const p of items){
         const btn = document.createElement('button');
         btn.type = "button";
-        btn.className = "choice";
-        btn.textContent = p.latin;
+        btn.className = "choice with-audio";
+        btn.textContent = "";
+
+        const left = document.createElement('div');
+        left.className = "choice-left";
+        left.innerHTML = `<b>${escapeHtml(p.latin || "")}</b>`;
+
+        const aud = document.createElement('button');
+        aud.type = "button";
+        aud.className = "choice-audio";
+        aud.innerHTML = AUDIO_ICON_SVG;
+        aud.style.display = (AUDIO_CFG.enabled ? "" : "none");
+
+        aud.addEventListener('click', async (ev) => {
+          ev.preventDefault();
+          ev.stopPropagation();
+          await playAudioUrl(audioUrlForPhraseId(p.id), aud);
+        });
+
+        btn.appendChild(left);
+        btn.appendChild(aud);
+
         btn.addEventListener('click', () => {
           if (answered) return;
           answered = true;
@@ -2083,6 +2316,7 @@ assets:
           hintVisible = true;
           if (promptHint) promptHint.classList.add('visible');
         });
+
         wrap.appendChild(btn);
       }
 
@@ -2092,9 +2326,7 @@ assets:
     }
 
     function tokenizeLatin(latin){
-      // keep punctuation attached to last token
       const s = String(latin || "").trim().replace(/\s+/g, " ");
-      // split on spaces, keep punctuation as part of token (fine for these short phrases)
       return s.split(" ").filter(Boolean);
     }
 
@@ -2121,7 +2353,6 @@ assets:
         target.innerHTML = "";
         bank.innerHTML = "";
 
-        // target tiles (click to remove)
         selected.forEach((o, i) => {
           const b = document.createElement('span');
           b.className = "tile";
@@ -2135,7 +2366,6 @@ assets:
           target.appendChild(b);
         });
 
-        // bank tiles (click to add if not already selected by idx)
         for (const o of shuffled){
           const inSel = selected.some(x => x.idx === o.idx);
           const b = document.createElement('span');
@@ -2167,7 +2397,6 @@ assets:
           bank.appendChild(b);
         }
 
-        // if already complete but wrong: mark once and show hint on next click
         if (selected.length === tokens.length){
           const current = normalizeAnswer(selected.map(x => x.t).join(" "));
           if (current !== answer){
@@ -2206,16 +2435,9 @@ assets:
       const label = `${sequence.labelPrefix} ${seqIndex+1}/${total}`;
       setText(overlayStep, label);
 
-      // Prompt policy:
-      // - mcq_match: show Latin as prompt, hint = NL (hidden)
-      // - word_order: show NL meaning as prompt, hint = Latin (hidden)
-      // - mcq_response: show Latin question as prompt, hint = NL (hidden)
-      // - tap_to_confirm: show Latin as prompt, hint = NL (hidden)
-      // - fill_blank_name: show Latin template as prompt, hint = NL (hidden)
-
       if (t === "mcq_match"){
         const p = getPhraseById(phraseId);
-        setPrompt({ title:"Kies de betekenis", main:p?.latin || "—", hint:p?.nl || "" });
+        setPrompt({ title:"Kies de betekenis", main:p?.latin || "—", hint:p?.nl || "", phraseIdForAudio: phraseId });
         overlayBody.appendChild(buildMcqMatch(phraseId));
         overlayNext.disabled = true;
         setText(overlayNote, "");
@@ -2224,7 +2446,7 @@ assets:
 
       if (t === "fill_blank_name"){
         const p = getPhraseById("mihi_nomen_est");
-        setPrompt({ title:"Vul namen in", main:p?.latin || "—", hint:p?.nl || "" });
+        setPrompt({ title:"Vul namen in", main:p?.latin || "—", hint:p?.nl || "", phraseIdForAudio: "mihi_nomen_est" });
         const ui = buildFillBlankName();
         overlayBody.appendChild(ui);
         currentDrill = { type:t, phraseId:"mihi_nomen_est", ui };
@@ -2233,31 +2455,46 @@ assets:
 
       if (t === "mcq_response"){
         const p = getPhraseById(drill.prompt_phrase_id);
-        setPrompt({ title:"Kies een antwoord", main:p?.latin || "—", hint:p?.nl || "" });
+        setPrompt({ title:"Kies een antwoord", main:p?.latin || "—", hint:p?.nl || "", phraseIdForAudio: drill.prompt_phrase_id });
         overlayBody.appendChild(buildMcqResponse(drill.prompt_phrase_id, drill.options_phrase_ids));
         return;
       }
 
       if (t === "word_order"){
         const p = getPhraseById(phraseId);
-        // no tautology: prompt is NL, not Latin
-        setPrompt({ title:"Zet de Latijnse woorden in de juiste volgorde", main:p?.nl || "—", hint:p?.latin || "" });
+        setPrompt({
+          title:"Zet de Latijnse woorden in de juiste volgorde",
+          main:p?.nl || "—",
+          hint:p?.latin || "",
+          phraseIdForAudio: phraseId
+        });
         overlayBody.appendChild(buildWordOrder(phraseId));
+        return;
+      }
+
+      if (t === "read_aloud"){
+        const p = getPhraseById(phraseId);
+        setPrompt({
+          title: "Luister en spreek na",
+          main: p?.latin || "—",
+          hint: p?.nl || "",
+          phraseIdForAudio: phraseId
+        });
+        overlayBody.appendChild(buildReadAloud(phraseId));
         return;
       }
 
       if (t === "tap_to_confirm"){
         const p = getPhraseById(phraseId);
-        setPrompt({ title:"Herken de zin", main:p?.latin || "—", hint:p?.nl || "" });
+        setPrompt({ title:"Herken de zin", main:p?.latin || "—", hint:p?.nl || "", phraseIdForAudio: phraseId });
         overlayBody.appendChild(buildTapToConfirm(phraseId));
         overlayNext.disabled = false;
         setText(overlayNote, "Klik op Verder.");
         return;
       }
 
-      // fallback
       const p = getPhraseById(phraseId);
-      setPrompt({ title:"Ga verder", main:p?.latin || "—", hint:p?.nl || "" });
+      setPrompt({ title:"Ga verder", main:p?.latin || "—", hint:p?.nl || "", phraseIdForAudio: phraseId });
       overlayBody.appendChild(buildTapToConfirm(phraseId));
       overlayNext.disabled = false;
       setText(overlayNote, "Klik op Verder.");
@@ -2289,7 +2526,6 @@ assets:
       if (seqIndex >= sequence.steps.length){
         finishSequence();
 
-        // unlock play after pre-match
         if (!state.winner && state.locked){
           state.locked = false;
           renderAll();
@@ -2333,77 +2569,66 @@ assets:
       state.locked = true;
       renderAll();
 
-      // show both outcomes as reinforcement (viewer-agnostic): ask winner text by MCQ for the phrase
       const seq = buildPostMatchSequence("winner");
       startSequence(seq);
     }
 
-// Put this near your other constants/state
-const LAST_PRACTICE_KEY = "rota_last_practice_phrase_v1";
-state.lastPracticePhraseId = localStorage.getItem(LAST_PRACTICE_KEY) || null;
+    // Practice picker
+    const LAST_PRACTICE_KEY = "rota_last_practice_phrase_v1";
+    state.lastPracticePhraseId = localStorage.getItem(LAST_PRACTICE_KEY) || null;
 
-// Replace your existing pickPracticeCandidate() with this
-function pickPracticeCandidate(){
-  const progress = loadProgress();
-  const phrases = (CFG?.latin_learning?.phrases || []).filter(p => p && p.id);
+    function pickPracticeCandidate(){
+      const progress = loadProgress();
+      const phrases = (CFG?.latin_learning?.phrases || []).filter(p => p && p.id);
 
-  if (!phrases.length) return "salve";
+      if (!phrases.length) return "salve";
 
-  const items = phrases.map(p => {
-    const pr = ensurePhraseProgress(progress, p.id);
-    const m  = mastery(progress, p.id);
-    const bucketW = pr.bucket === "new" ? 0 : (pr.bucket === "learning" ? 1 : 2);
-    return { id: p.id, bucketW, seen: pr.seen || 0, m };
-  });
+      const items = phrases.map(p => {
+        const pr = ensurePhraseProgress(progress, p.id);
+        const m  = mastery(progress, p.id);
+        const bucketW = pr.bucket === "new" ? 0 : (pr.bucket === "learning" ? 1 : 2);
+        return { id: p.id, bucketW, seen: pr.seen || 0, m };
+      });
 
-  // Primary: bucket (new -> learning -> known), then least seen, then lowest mastery
-  items.sort((a,b) => (a.bucketW - b.bucketW) || (a.seen - b.seen) || (a.m - b.m));
+      items.sort((a,b) => (a.bucketW - b.bucketW) || (a.seen - b.seen) || (a.m - b.m));
 
-  const minBucket = items[0].bucketW;
-  const minSeen   = items[0].seen;
+      const minBucket = items[0].bucketW;
+      const minSeen   = items[0].seen;
 
-  // Candidate tier: same bucket + same seen count (prevents “always first in YAML”)
-  let cand = items.filter(x => x.bucketW === minBucket && x.seen === minSeen);
+      let cand = items.filter(x => x.bucketW === minBucket && x.seen === minSeen);
+      if (cand.length < 2) cand = items.slice(0, Math.min(4, items.length));
 
-  // If the tier is tiny, broaden a bit so it still feels varied
-  if (cand.length < 2) cand = items.slice(0, Math.min(4, items.length));
+      if (state.lastPracticePhraseId && cand.length > 1){
+        const filtered = cand.filter(x => x.id !== state.lastPracticePhraseId);
+        if (filtered.length) cand = filtered;
+      }
 
-  // Avoid immediate repeat if possible
-  if (state.lastPracticePhraseId && cand.length > 1){
-    const filtered = cand.filter(x => x.id !== state.lastPracticePhraseId);
-    if (filtered.length) cand = filtered;
-  }
+      const pick = cand[Math.floor(Math.random() * cand.length)].id;
+      state.lastPracticePhraseId = pick;
+      try{ localStorage.setItem(LAST_PRACTICE_KEY, pick); }catch(e){}
+      return pick;
+    }
 
-  const pick = cand[Math.floor(Math.random() * cand.length)].id;
-  state.lastPracticePhraseId = pick;
-  try{ localStorage.setItem(LAST_PRACTICE_KEY, pick); }catch(e){}
-  return pick;
-}
+    btnPractice?.addEventListener('click', () => {
+      if (helpModal?.classList.contains('active')) closeHelpModal();
 
+      if (state.drillsUsedThisMatch >= state.maxDrills) return;
 
-btnPractice?.addEventListener('click', () => {
-  if (helpModal?.classList.contains('active')) closeHelpModal();
+      const pid = pickPracticeCandidate();
+      const phrase = getPhraseById(pid);
 
-  if (state.drillsUsedThisMatch >= state.maxDrills) return;
+      const progress = loadProgress();
+      const m = mastery(progress, pid);
+      const canWord = (phrase?.drill_modes || []).includes("word_order");
+      const drillType = (canWord && m < 0.6) ? "word_order" : "mcq_match";
 
-  const pid = pickPracticeCandidate();
-  const phrase = getPhraseById(pid);
+      state.drillsUsedThisMatch += 1;
 
-  const progress = loadProgress();
-  const m = mastery(progress, pid);
-  const canWord = (phrase?.drill_modes || []).includes("word_order");
-  const drillType = (canWord && m < 0.6) ? "word_order" : "mcq_match";
-
-
-  state.drillsUsedThisMatch += 1;
-
-  startSequence({
-    steps: [{ phrase_id: pid, drill: { type: drillType, show_english_hint: false } }],
-    labelPrefix: UI_TEXT.overlay_practice
-  });
-});
-
-
+      startSequence({
+        steps: [{ phrase_id: pid, drill: { type: drillType, show_english_hint: false } }],
+        labelPrefix: UI_TEXT.overlay_practice
+      });
+    });
 
     /* =========================
        Reset / first launch gate
