@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- Rota app icon (minimal) — exactly 8 dots -->
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="45%" r="70%">
+      <stop offset="0%" stop-color="#12162B"/>
+      <stop offset="100%" stop-color="#0B0D18"/>
+    </radialGradient>
+    <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="10" result="blur"/>
+      <feColorMatrix in="blur" type="matrix"
+        values="1 0 0 0 0
+                0 1 0 0 0
+                0 0 1 0 0
+                0 0 0 0.22 0" result="glow"/>
+      <feMerge>
+        <feMergeNode in="glow"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect x="0" y="0" width="1024" height="1024" fill="url(#bg)"/>
+
+  <g fill="none" stroke="#5200ff" stroke-linecap="round" stroke-linejoin="round" filter="url(#softGlow)">
+    <circle cx="512" cy="512" r="320" stroke-width="26"/>
+    <circle cx="512" cy="512" r="110" stroke-width="22"/>
+
+    <g stroke-width="26">
+      <line x1="512" y1="512" x2="512" y2="192"/>
+      <line x1="512" y1="512" x2="738.27" y2="285.73"/>
+      <line x1="512" y1="512" x2="832" y2="512"/>
+      <line x1="512" y1="512" x2="738.27" y2="738.27"/>
+      <line x1="512" y1="512" x2="512" y2="832"/>
+      <line x1="512" y1="512" x2="285.73" y2="738.27"/>
+      <line x1="512" y1="512" x2="192" y2="512"/>
+      <line x1="512" y1="512" x2="285.73" y2="285.73"/>
+    </g>
+
+    <!-- exactly 8 dots -->
+    <g fill="#5200ff" stroke="none">
+      <circle cx="512" cy="214" r="22"/>
+      <circle cx="724.13" cy="299.87" r="22"/>
+      <circle cx="810" cy="512" r="22"/>
+      <circle cx="724.13" cy="724.13" r="22"/>
+      <circle cx="512" cy="810" r="22"/>
+      <circle cx="299.87" cy="724.13" r="22"/>
+      <circle cx="214" cy="512" r="22"/>
+      <circle cx="299.87" cy="299.87" r="22"/>
+    </g>
+  </g>
+</svg>
