@@ -1,0 +1,2239 @@
+<!doctype html>
+
+<!--Auteur: Robbe Wulgaert / aiindeklas.be-->
+<!-- Copyright 2026 - Gebruik vrij voor educatie mits expliciete naamsvermelding -->
+
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#5200FF" />
+  <meta name="format-detection" content="telephone=no" />
+  <title>Rota</title>
+
+  <style>
+    :root{
+      --brand-purple:#5200FF;
+      --brand-purple-dark:#3700B3;
+      --brand-aqua:#3DFFD0;
+      --brand-white:#FFFFFF;
+
+      --bg:#F3F5F8;
+      --panel:#F7F8FA;
+      --ink:#23272E;
+      --muted:#9AA3B2;
+
+      --card:#FFFFFF;
+      --border:#ECECF3;
+      --shadow:0 2px 12px rgba(82,0,255,0.08);
+
+      --topbar-h:70px;
+
+      --p1: var(--brand-purple);
+      --p2: var(--brand-aqua);
+
+      --board-max: 560px;
+      --tap: 44px;
+
+      /* Wordt door JS gezet per beurt */
+      --turn-col: var(--p1);
+      --turn-col-soft: rgba(82,0,255,0.14);
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--ink);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      overflow-x:hidden;
+    }
+
+    /* ====== App shell ====== */
+    .app{
+      min-height:100%;
+      display:flex;
+      flex-direction:column;
+    }
+
+    .topbar{
+      position:sticky;
+      top:0;
+      z-index:50;
+      height:var(--topbar-h);
+      background:linear-gradient(180deg, #ffffff 0%, #fbfbfe 100%);
+      border-bottom:1px solid var(--border);
+      display:flex;
+      align-items:center;
+      padding:0 16px;
+      gap:14px;
+    }
+
+    .brand{
+      display:flex;
+      flex-direction:column;
+      line-height:1.05;
+      min-width: 180px;
+    }
+    .brand .title{
+      font-weight:900;
+      letter-spacing:0.2px;
+      color:var(--brand-purple);
+      font-size:1.05rem;
+    }
+    .brand .subtitle{
+      font-size:0.88rem;
+      color:var(--muted);
+      margin-top:2px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width: 320px;
+    }
+
+    .statusline{
+      margin-left:auto;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding:8px 12px;
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:999px;
+      box-shadow:0 1px 10px rgba(0,0,0,0.03);
+      font-size:0.95rem;
+    }
+    .pill b{ font-weight:900; }
+
+    .dot{
+      width:10px;height:10px;border-radius:50%;
+      background:var(--muted);
+      box-shadow:0 0 0 3px rgba(0,0,0,0.04);
+    }
+    .dot.p1{ background:var(--p1); box-shadow:0 0 0 3px rgba(82,0,255,0.10); }
+    .dot.p2{ background:var(--p2); box-shadow:0 0 0 3px rgba(61,255,208,0.20); }
+
+    .btn{
+      height:40px;
+      padding:0 14px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:#fff;
+      cursor:pointer;
+      font-weight:900;
+      color:var(--ink);
+      box-shadow:0 1px 10px rgba(0,0,0,0.03);
+    }
+    .btn:active{ transform:translateY(1px); }
+    .btn.primary{
+      border-color:transparent;
+      background:var(--brand-purple);
+      color:#fff;
+      box-shadow:0 8px 24px rgba(82,0,255,0.18);
+    }
+    .btn.primary:hover{ background:var(--brand-purple-dark); }
+
+    .main{
+      flex:1;
+      display:grid;
+      grid-template-columns: 320px minmax(280px, 1fr) 320px;
+      gap:16px;
+      padding:16px;
+      align-items:stretch;
+    }
+
+    .panel{
+      background:var(--panel);
+      border:1px solid var(--border);
+      border-radius:16px;
+      box-shadow: var(--shadow);
+      padding:14px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      min-height: 360px;
+    }
+
+    .panel h3{
+      margin:0;
+      font-size:1.05rem;
+      font-weight:900;
+      color:var(--ink);
+    }
+
+    .playerCard{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:14px;
+      box-shadow:0 1px 10px rgba(0,0,0,0.03);
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .playerRow{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      justify-content:space-between;
+    }
+    .playerName{
+      font-weight:900;
+      font-size:1.1rem;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width:0;
+    }
+    .playerName span{
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width: 180px;
+      display:inline-block;
+    }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:7px 10px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      font-weight:900;
+      font-size:0.9rem;
+      background:#fff;
+    }
+
+    .phaseBox{
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:12px;
+      line-height:1.45;
+      font-size:0.98rem;
+    }
+    .phaseBox b{ font-weight:900; }
+    .muted{ color:var(--muted); }
+
+    /* ====== Pucks indicator ====== */
+    .puckRow{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      padding-top:2px;
+    }
+    .puck{
+      width:14px;height:14px;border-radius:50%;
+      border:2px solid rgba(0,0,0,0.10);
+      box-shadow:0 1px 6px rgba(0,0,0,0.06);
+      background:#fff;
+      opacity:0.25;
+      transition: opacity 160ms ease, transform 160ms ease;
+    }
+    .puck.on{ opacity:1; transform:scale(1.04); }
+    .puck.p1{ background:var(--p1); border-color: rgba(82,0,255,0.18); }
+    .puck.p2{ background:var(--p2); border-color: rgba(61,255,208,0.25); }
+
+    /* ====== Board ====== */
+    .boardWrap{
+      background:var(--panel);
+      border:1px solid var(--border);
+      border-radius:20px;
+      box-shadow: var(--shadow);
+      padding:14px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      align-items:center;
+      justify-content:center;
+      min-height: 360px;
+      position:relative;
+    }
+
+    .board{
+      width:min(92vw, var(--board-max));
+      aspect-ratio: 1 / 1;
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:24px;
+      box-shadow:0 10px 36px rgba(0,0,0,0.05);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      position:relative;
+      overflow:hidden;
+      touch-action:manipulation;
+    }
+
+    svg{ width:100%; height:100%; display:block; }
+
+    .svg-line{ stroke:#dad7f3; stroke-width:6; stroke-linecap:round; }
+    .svg-circle{ fill:none; stroke:#e9e6fb; stroke-width:10; }
+
+    .node{
+      cursor:pointer;
+      transition: transform 120ms ease;
+    }
+    .node:hover{ transform: scale(1.02); }
+    .node-hit{ fill:transparent; }
+
+    .node-ring{
+      fill:#fff;
+      stroke:#dfe3ea;
+      stroke-width:4;
+    }
+    .node-ring.selectable{
+      stroke: var(--turn-col);
+      stroke-width:5;
+      filter: drop-shadow(0 2px 10px var(--turn-col-soft));
+    }
+    .node-ring.selected{
+      stroke: var(--turn-col);
+      stroke-width:7;
+      filter: drop-shadow(0 3px 14px var(--turn-col-soft));
+    }
+
+    .piece{ pointer-events:none; }
+    .piece.p1{ fill: var(--p1); }
+    .piece.p2{ fill: var(--p2); }
+    .pieceShadow{
+      pointer-events:none;
+      fill: rgba(0,0,0,0.10);
+      transform: translate(2px,3px);
+    }
+
+    .hintRow{
+      width:100%;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+    .hintRow .small{
+      font-size:0.95rem;
+      color:var(--muted);
+      font-weight:800;
+    }
+
+    /* ====== Overlay (micro-drills) ====== */
+    .overlay{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,0.52);
+      z-index:1200;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+    }
+    .overlay.active{ display:flex; }
+
+    .overlayCard{
+      width:min(720px, 98vw);
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:18px;
+      box-shadow:0 24px 80px rgba(0,0,0,0.25);
+      padding:18px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+    .overlayTop{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .overlayTop h2{
+      margin:0;
+      font-size:1.15rem;
+      font-weight:900;
+      color:var(--brand-purple);
+    }
+    .overlayTop .step{
+      font-weight:900;
+      color:var(--muted);
+    }
+    .promptBox{
+      background:var(--panel);
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:14px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .promptLatin{
+      font-size:1.35rem;
+      font-weight:900;
+      color:var(--ink);
+    }
+    .promptHint{
+      color:var(--muted);
+      font-weight:800;
+      line-height:1.35;
+      display:none; /* vertaling onder de prompt: uitgeschakeld */
+    }
+
+    .choices{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+    .choice{
+      border:1px solid var(--border);
+      background:#fff;
+      border-radius:14px;
+      padding:12px;
+      cursor:pointer;
+      font-weight:900;
+      line-height:1.25;
+      min-height:54px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      box-shadow:0 1px 10px rgba(0,0,0,0.03);
+    }
+    .choice:hover{ border-color:#d7d2fb; }
+    .choice.correct{ outline: 3px solid rgba(61,255,208,0.55); }
+    .choice.wrong{ outline: 3px solid rgba(255, 77, 77, 0.45); }
+
+    .inputRow{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .textInput{
+      flex:1;
+      min-width: 220px;
+      height:44px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      padding:0 12px;
+      font-size:1rem;
+      font-weight:900;
+      outline:none;
+    }
+    .textInput:focus{ border-color:#d7d2fb; box-shadow:0 0 0 4px rgba(82,0,255,0.08); }
+
+    .overlayActions{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .note{
+      font-size:0.95rem;
+      color:var(--muted);
+      font-weight:800;
+      line-height:1.35;
+    }
+
+    /* ====== Word order drill ====== */
+    .bank{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+    }
+    .tile{
+      border:1px solid var(--border);
+      background:#fff;
+      border-radius:999px;
+      padding:10px 14px;
+      cursor:pointer;
+      font-weight:900;
+      box-shadow:0 1px 10px rgba(0,0,0,0.03);
+      user-select:none;
+    }
+    .tile[disabled]{ opacity:0.35; cursor:default; }
+    .answerLine{
+      min-height:54px;
+      border:1px dashed #d7d2fb;
+      background:#fbfbfe;
+      border-radius:14px;
+      padding:12px;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex-wrap:wrap;
+      font-weight:900;
+    }
+    .miniBtn{
+      height:40px;
+      padding:0 12px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:#fff;
+      cursor:pointer;
+      font-weight:900;
+    }
+
+    /* ====== Help button + modal ====== */
+    .help-btn{
+      position:fixed;
+      right:32px;
+      bottom:32px;
+      z-index:1500;
+      background:var(--brand-purple);
+      color:#fff;
+      font-size:2em;
+      border:none;
+      border-radius:50%;
+      width:54px;
+      height:54px;
+      cursor:pointer;
+      box-shadow:0 2px 10px rgba(82,0,255,0.11);
+    }
+    .help-btn:hover{ background:var(--brand-purple-dark); }
+
+    .help-modal{
+      display:none;
+      position:fixed;
+      left:0; top:0; right:0; bottom:0;
+      background:rgba(0,0,0,0.52);
+      z-index:2000;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+    }
+    .help-modal.active{ display:flex !important; }
+
+    .help-content{
+      background:#fff;
+      color:var(--ink);
+      border-radius:14px;
+      padding:2.0rem 1.8rem 1.4rem 1.8rem;
+      width:900px;
+      max-width:98vw;
+      box-shadow:0 6px 40px rgba(82,0,255,0.17);
+      position:relative;
+      display:flex;
+      gap:1.6rem;
+      flex-direction:row;
+    }
+    .help-left{ width:44%; min-width:220px; max-height:70vh; overflow-y:auto; }
+    .help-right{ width:56%; min-width:220px; max-height:70vh; overflow-y:auto; }
+
+    .help-content h2{
+      color:var(--brand-purple);
+      font-weight:900;
+      margin-top:0;
+      margin-bottom:0.7rem;
+    }
+    .help-content ul{
+      padding-left:1.2em;
+      font-size:1.02em;
+      line-height:1.5;
+    }
+    .help-content code{
+      background:#f2f0fd;
+      padding:2px 6px;
+      border-radius:5px;
+      font-size:1em;
+      font-weight:900;
+    }
+    .close-help{
+      position:absolute;
+      top:0.9rem;
+      right:0.9rem;
+      background:none;
+      border:none;
+      font-size:1.05em;
+      cursor:pointer;
+      color:var(--ink);
+      font-weight:900;
+      padding:8px 10px;
+      border-radius:12px;
+    }
+    .close-help:hover{ background:#f3f5f8; }
+
+    .help-content table{
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      border:1px solid var(--border);
+      border-radius:12px;
+      overflow:hidden;
+      background:#fff;
+    }
+    .help-content th, .help-content td{
+      text-align:left;
+      padding:10px 12px;
+      border-bottom:1px solid var(--border);
+      vertical-align:top;
+      font-size:0.98em;
+    }
+    .help-content tr:last-child td{ border-bottom:none; }
+    .help-content th{
+      background:#f2f0fd;
+      font-weight:900;
+      color:var(--ink);
+    }
+    .help-hint{
+      color:var(--muted);
+      font-weight:800;
+      font-size:0.95em;
+      margin-top:10px;
+      line-height:1.4;
+    }
+
+    /* ====== Layout modes ====== */
+    body.mode-desktop .main{ grid-template-columns: 320px minmax(280px, 1fr) 320px; }
+    body.mode-desktop .tabletTop, body.mode-desktop .tabletBottom{ display:none; }
+
+    body.mode-tablet .main{
+      grid-template-columns: 1fr;
+      padding:12px;
+    }
+    body.mode-tablet .panel.side{ display:none; }
+    body.mode-tablet .boardWrap{ padding:12px; }
+
+    body.mode-tablet .tabletTop,
+    body.mode-tablet .tabletBottom{
+      display:block;
+      background:var(--panel);
+      border:1px solid var(--border);
+      border-radius:16px;
+      box-shadow: var(--shadow);
+      padding:12px;
+    }
+
+    /* Tablet: bovenste speler is "omgedraaid" richting de andere speler */
+    body.mode-tablet .tabletTop{ transform: rotate(180deg); }
+    body.mode-tablet .tabletTop .btn,
+    body.mode-tablet .tabletTop input,
+    body.mode-tablet .tabletTop .badge,
+    body.mode-tablet .tabletTop .phaseBox,
+    body.mode-tablet .tabletTop .playerName,
+    body.mode-tablet .tabletTop .puckRow{
+      transform: rotate(180deg);
+    }
+
+    body.mode-tablet .help-btn{
+      right:18px;
+      bottom:50%;
+      transform: translateY(50%);
+      width:54px;
+      height:54px;
+    }
+
+    body.mode-phone .main{
+      grid-template-columns: 1fr;
+      padding:10px;
+      gap:10px;
+    }
+    body.mode-phone .panel.side{ display:none; }
+    body.mode-phone .boardWrap{ padding:10px; border-radius:18px; }
+    body.mode-phone .board{ border-radius:18px; }
+    body.mode-phone .help-btn{
+      right:14px;
+      bottom:14px;
+      width:48px;
+      height:48px;
+      font-size:1.7em;
+    }
+    body.mode-phone .brand{ min-width: 140px; }
+    body.mode-phone .brand .subtitle{ display:none; }
+    body.mode-phone .pill{ padding:7px 10px; font-size:0.92rem; }
+
+    .tabletTop, .tabletBottom{ display:none; }
+
+    /* ===== Turn emphasis ===== */
+    .player-zone{
+      transition: opacity 160ms ease, filter 160ms ease, outline-color 160ms ease;
+    }
+    .player-zone.inactive{
+      opacity:0.38;
+      filter: grayscale(1) saturate(0.15);
+    }
+    .player-zone.active{
+      opacity:1;
+      filter:none;
+    }
+    body.turn-p1 .player-zone[data-player="p1"].active{
+      outline:3px solid rgba(82,0,255,0.18);
+      outline-offset:4px;
+    }
+    body.turn-p2 .player-zone[data-player="p2"].active{
+      outline:3px solid rgba(61,255,208,0.28);
+      outline-offset:4px;
+    }
+    body.game-locked .player-zone{
+      opacity:0.55;
+      filter: grayscale(0.85) saturate(0.2);
+      outline: none;
+    }
+    body.turn-p1 .piece.p2{ opacity:0.28; }
+    body.turn-p2 .piece.p1{ opacity:0.28; }
+    body.game-locked .piece{ opacity:0.5; }
+
+    .sr-only{
+      position:absolute;
+      width:1px;height:1px;
+      padding:0;margin:-1px;
+      overflow:hidden;clip:rect(0,0,0,0);
+      border:0;
+    }
+      
+      .help-actions{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+    margin:10px 0 14px 0;
+  }
+  .help-actions .help-hint{
+    margin:0;
+  }
+
+  </style>
+</head>
+
+<body>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script id="rota-yaml" type="text/plain">
+meta:
+  project: "Rota"
+  purpose: "1v1 Rota-spel met mini-Latijn via korte oefeningen op vaste momenten."
+  audience: "Beginners (secundair onderwijs)"
+  ui_language: "nl"
+  latin_level: "very_light"
+  version: "1.1"
+
+theme:
+  colors:
+    primary:   "#5200FF"
+    secondary: "#3DFFD0"
+    purple_dark: "#3700B3"
+    white: "#FFFFFF"
+    bg: "#F3F5F8"
+    panel: "#F7F8FA"
+    ink: "#23272E"
+    muted: "#9AA3B2"
+    card: "#FFFFFF"
+    border: "#ECECF3"
+  shadow: "0 2px 12px rgba(82,0,255,0.08)"
+  layout:
+    topbar_h_px: 70
+
+game:
+  name: "Rota"
+  tagline: "Strategiespel uit de Klassieke Oudheid met drie stukken per speler."
+  background:
+    short: >
+      Rota (Latijn: “wiel”) is een oud spel dat gespeeld wordt op een cirkelbord met vaste punten.
+      Eerst leg je je drie stukken, daarna schuif je telkens één stap langs een verbindingslijn.
+    rules_summary:
+      pieces_per_player: 3
+      phases:
+        - id: "placement"
+          description: "Om beurten plaats je één stuk op een leeg punt tot iedereen 3 stukken heeft."
+        - id: "movement"
+          description: "Daarna schuif je om beurten één stuk naar een direct verbonden leeg punt (geen sprongen)."
+      movement_rule: "Je verplaatst precies één stap naar een direct verbonden leeg punt."
+      win_condition: "Wie als eerste drie op een rij maakt door het midden, wint."
+  players:
+    - id: "p1"
+      label: "Speler 1"
+      color: "#5200FF"
+    - id: "p2"
+      label: "Speler 2"
+      color: "#3DFFD0"
+  ui_hooks:
+    show_rule_overlay_on_first_launch: true
+    show_phase_indicator: true
+    show_three_in_row_hint: true
+
+latin_learning:
+  phrases:
+    - id: "salve"
+      latin: "Salve!"
+      moment: ["welcome", "match_start"]
+      drill_modes: ["mcq_match", "tap_to_confirm"]
+
+    - id: "mihi_nomen_est"
+      latin: "Mihi nomen est …"
+      moment: ["profile_set", "match_start"]
+      drill_modes: ["fill_blank_name"]
+
+    - id: "quid_agis"
+      latin: "Quid agis?"
+      moment: ["match_start"]
+      drill_modes: ["mcq_response"]
+
+    - id: "bene_mihi_est"
+      latin: "Bene mihi est."
+      moment: ["match_start_response"]
+      drill_modes: ["choice_button"]
+
+    - id: "male_mihi_est"
+      latin: "Male mihi est."
+      moment: ["match_start_response"]
+      drill_modes: ["choice_button"]
+
+    - id: "et_tibi"
+      latin: "Et tibi?"
+      moment: ["match_start_response"]
+      drill_modes: ["word_order"]
+
+    - id: "paratus_es_m"
+      latin: "Paratus es?"
+      moment: ["ready_check"]
+      drill_modes: ["mcq_match"]
+
+    - id: "parata_es_f"
+      latin: "Parata es?"
+      moment: ["ready_check"]
+      drill_modes: ["mcq_match"]
+
+    - id: "ego_paratus_sum"
+      latin: "Ego paratus sum."
+      moment: ["ready_reply"]
+      drill_modes: ["choice_button"]
+
+    - id: "ego_parata_sum"
+      latin: "Ego parata sum."
+      moment: ["ready_reply"]
+      drill_modes: ["choice_button"]
+
+    - id: "finis_ludi"
+      latin: "Finis lūdī."
+      moment: ["match_end"]
+      drill_modes: ["tap_to_confirm"]
+
+    - id: "vinco"
+      latin: "Vincō!"
+      moment: ["winner_banner"]
+      drill_modes: ["mcq_match", "word_order"]
+
+    - id: "vincis"
+      latin: "Vincis!"
+      moment: ["loser_banner"]
+      drill_modes: ["mcq_match", "word_order"]
+
+  ui_integration:
+    pre_match_sequence:
+      max_steps: 4
+      steps:
+        - phrase_id: "salve"
+          drill: { type: "mcq_match" }
+        - phrase_id: "mihi_nomen_est"
+          drill: { type: "fill_blank_name" }
+        - phrase_id: "quid_agis"
+          drill:
+            type: "mcq_response"
+            prompt_phrase_id: "quid_agis"
+            options_phrase_ids: ["bene_mihi_est", "male_mihi_est"]
+        - phrase_id: "et_tibi"
+          drill: { type: "word_order" }
+
+    post_match_sequence:
+      steps:
+        - phrase_id: "finis_ludi"
+          drill: { type: "tap_to_confirm" }
+        - phrase_id: "vinco"
+          drill: { type: "mcq_match" }
+        - phrase_id: "vincis"
+          drill: { type: "word_order" }
+
+  practice_engine:
+    session_limits:
+      max_total_drills_per_match: 6
+      max_seconds_per_drill: 10
+    persistence:
+      store_key: "rota_latin_progress_v1"
+      per_phrase_fields: ["seen", "correct", "wrong", "streak", "bucket", "last_seen_iso"]
+
+assets:
+  audio:
+    enabled: false
+    files: []
+  </script>
+
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="title" id="brand-title">Rota</div>
+        <div class="subtitle" id="brand-subtitle">Strategiespel uit de Klassieke Oudheid</div>
+      </div>
+
+      <div class="statusline">
+        <div class="pill" id="pill-turn">
+          <span class="dot" id="turn-dot"></span>
+          <span><b>Aan zet:</b> <span id="turn-name">—</span></span>
+        </div>
+       <!--  <div class="pill" id="pill-phase">
+          <span><b>Fase:</b> <span id="phase-name">—</span></span>
+        </div>-->
+        <button class="btn" id="btn-reset" type="button">Nieuw spel</button>
+      </div>
+    </header>
+
+    <!-- Tablet tabletop: top player indicator -->
+    <section class="tabletTop player-zone" id="tabletTop" data-player="p2">
+      <div class="playerCard">
+        <div class="playerRow">
+          <div class="playerName">
+            <span class="dot p2"></span>
+            <span id="t-p2-name">Speler 2</span>
+          </div>
+          <div class="badge" id="t-p2-badge">—</div>
+        </div>
+        <div class="puckRow" id="t-p2-pucks"></div>
+        <div class="phaseBox">
+          <b>Na het plaatsen:</b> schuif je <code>exact één stap</code> naar een <b>direct verbonden</b> leeg punt.
+        </div>
+      </div>
+    </section>
+
+    <main class="main">
+      <!-- Left side (desktop) -->
+      <aside class="panel side player-zone" id="side-left" data-player="p1">
+        <h3>Speler 1</h3>
+        <div class="playerCard">
+          <div class="playerRow">
+            <div class="playerName">
+              <span class="dot p1"></span>
+              <span id="p1-name">Speler 1</span>
+            </div>
+            <div class="badge" id="p1-badge">—</div>
+          </div>
+          <div class="puckRow" id="p1-pucks"></div>
+          <div class="phaseBox" id="p1-box">
+            <b>Doel:</b> maak <code>drie op een rij</code> door het midden.<br>
+            <span class="muted" id="p1-hint"></span>
+          </div>
+        </div>
+
+        <h3>Spelinfo</h3>
+        <div class="phaseBox" id="rules-box">
+          <div class="muted" id="rules-short">—</div>
+          <div style="height:8px"></div>
+          <b>Zet:</b> <span id="rules-move">—</span><br>
+          <b>Winnen:</b> <span id="rules-win">—</span>
+        </div>
+      </aside>
+
+      <!-- Center -->
+      <section class="boardWrap" aria-label="Rota bord">
+        <div class="board" id="board" role="application" aria-label="Rota speelveld">
+          <svg viewBox="0 0 400 400" aria-hidden="true">
+            <circle class="svg-circle" cx="200" cy="200" r="150"></circle>
+
+            <line class="svg-line" x1="200" y1="50" x2="200" y2="350"></line>
+            <line class="svg-line" x1="50" y1="200" x2="350" y2="200"></line>
+            <line class="svg-line" x1="94" y1="94" x2="306" y2="306"></line>
+            <line class="svg-line" x1="306" y1="94" x2="94" y2="306"></line>
+
+            <g id="nodes"></g>
+            <g id="pieces"></g>
+          </svg>
+        </div>
+
+        <div class="hintRow">
+          <div class="small" id="actionHint">—</div>
+          <div class="small" id="threeHint">—</div>
+        </div>
+      </section>
+
+      <!-- Right side (desktop) -->
+      <aside class="panel side player-zone" id="side-right" data-player="p2">
+        <h3>Speler 2</h3>
+        <div class="playerCard">
+          <div class="playerRow">
+            <div class="playerName">
+              <span class="dot p2"></span>
+              <span id="p2-name">Speler 2</span>
+            </div>
+            <div class="badge" id="p2-badge">—</div>
+          </div>
+          <div class="puckRow" id="p2-pucks"></div>
+          <div class="phaseBox" id="p2-box">
+            <b>Tip:</b> blokkeer lijnen door het midden.<br>
+            <span class="muted" id="p2-hint"></span>
+          </div>
+        </div>
+
+        <h3>Latijn 101</h3>
+        <div class="phaseBox">
+          <b>Werking:</b> korte micro-oefeningen bij de start en het einde van het spel.<br>
+          <span class="muted">De speluitleg en alle zinnen blijven beschikbaar via <b>?</b>.</span>
+        </div>
+      </aside>
+    </main>
+
+    <!-- Tablet tabletop: bottom player indicator -->
+    <section class="tabletBottom player-zone" id="tabletBottom" data-player="p1">
+      <div class="playerCard">
+        <div class="playerRow">
+          <div class="playerName">
+            <span class="dot p1"></span>
+            <span id="t-p1-name">Speler 1</span>
+          </div>
+          <div class="badge" id="t-p1-badge">—</div>
+        </div>
+        <div class="puckRow" id="t-p1-pucks"></div>
+        <div class="phaseBox">
+          <b>Na het plaatsen:</b> schuif je <code>exact één stap</code> naar een <b>direct verbonden</b> leeg punt.
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Help button -->
+  <button id="help-btn" class="help-btn" type="button" aria-label="Hulp">?</button>
+
+  <!-- Help modal -->
+  <div id="help-modal" class="help-modal" role="dialog" aria-modal="true" aria-labelledby="help-title">
+    <div class="help-content" role="document">
+      <button id="close-help" class="close-help" type="button">Sluiten ✕</button>
+
+      <div class="help-left">
+        <h2 id="help-title">Hoe speel je Rota?</h2>
+        <div id="help-howto"></div>
+        <div class="help-hint" id="help-culture"></div>
+      </div>
+
+      <div class="help-right">
+        <h2>Latijnse zinnen</h2>
+        <div id="help-latin"></div>
+          <div class="help-actions">
+              <button class="btn primary" id="btn-printable" type="button">Maak printbare versie</button>
+
+</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Micro-drill overlay -->
+  <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="overlay-title">
+    <div class="overlayCard" role="document">
+      <div class="overlayTop">
+        <h2 id="overlay-title">Latijn 101</h2>
+        <div class="step" id="overlay-step">—</div>
+      </div>
+
+      <div class="promptBox" id="promptBox">
+        <div class="promptLatin" id="promptLatin">—</div>
+        <div class="promptHint" id="promptHint">—</div>
+      </div>
+
+      <div id="overlay-body"></div>
+
+      <div class="overlayActions">
+        <div class="note" id="overlay-note">—</div>
+        <button class="btn primary" id="overlay-next" type="button">Verder</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+
+  <script>
+    function escapeHtml(s){
+      return String(s).replace(/[&<>"']/g, m => ({
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+      }[m]));
+    }
+
+    const NL_GLOSS = {
+      salve: "Hallo (enkelvoud).",
+      mihi_nomen_est: "Mijn naam is …",
+      quid_agis: "Hoe gaat het?",
+      bene_mihi_est: "Het gaat goed met mij.",
+      male_mihi_est: "Het gaat niet goed met mij.",
+      et_tibi: "En met jou?",
+      paratus_es_m: "Ben je klaar? (tegen een jongen)",
+      parata_es_f: "Ben je klaar? (tegen een meisje)",
+      ego_paratus_sum: "Ik ben klaar. (jongen spreekt)",
+      ego_parata_sum: "Ik ben klaar. (meisje spreekt)",
+      finis_ludi: "Einde van het spel.",
+      vinco: "Ik win!",
+      vincis: "Jij wint!"
+    };
+
+    const WORD_ORDER = {
+      et_tibi: { tokens:["Et","tibi?"], prompt:"Zet de woorden in de juiste volgorde: “En met jou?”" },
+      vinco:   { tokens:["Vincō!"],     prompt:"Bouw de zin: “Ik win!”" },
+      vincis:  { tokens:["Vincis!"],    prompt:"Bouw de zin: “Jij wint!”" }
+    };
+
+    const UI_TEXT = {
+      phase_placement: "plaatsen",
+      phase_movement: "schuiven",
+      hint_place: "Plaatsen: klik op een leeg punt om een stuk te plaatsen.",
+      hint_select: "Schuiven: klik op jouw stuk, kies daarna een direct verbonden leeg punt.",
+      hint_move: "Schuiven: kies een direct verbonden leeg punt (exact één stap).",
+      hint_win: "Winnen: drie op een rij door het midden.",
+      gate_label: "Start",
+      end_label: "Einde"
+    };
+
+    function loadCfgFromYaml(){
+      const raw = document.getElementById('rota-yaml').textContent.trim();
+      const cfg = jsyaml.load(raw) || {};
+      const phrases = cfg?.latin_learning?.phrases || [];
+      for (const p of phrases){
+        if (!p) continue;
+        p.nl = p.nl || NL_GLOSS[p.id] || "";
+      }
+      cfg.latin_learning ||= {};
+      cfg.latin_learning.practice_engine ||= { persistence:{ store_key:"rota_latin_progress_v1" } };
+      cfg.latin_learning.practice_engine.persistence ||= { store_key:"rota_latin_progress_v1" };
+      return cfg;
+    }
+
+    const CFG = loadCfgFromYaml();
+    window.ROTA_CFG = CFG;
+      
+    const btnPrintable = document.getElementById('btn-printable');
+
+function buildPrintablePdf(){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+
+  const W = doc.internal.pageSize.getWidth();
+  const H = doc.internal.pageSize.getHeight();
+  const margin = 12;
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(18);
+  doc.text("Rota — printversie", margin, 16);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.text("Speel offline met het bord hieronder. Noteer namen en gebruik de zinnenlijst.", margin, 22);
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.text("Speler 1:", margin, 32);
+  doc.line(margin + 20, 32, margin + 88, 32);
+
+  doc.text("Speler 2:", margin + 95, 32);
+  doc.line(margin + 115, 32, W - margin, 32);
+
+  const cx = W / 2;
+  const cy = 70;
+  const r  = 45;
+
+  doc.setLineWidth(0.6);
+  doc.circle(cx, cy, r);
+
+  doc.setLineWidth(0.5);
+  doc.line(cx, cy - r, cx, cy + r);
+  doc.line(cx - r, cy, cx + r, cy);
+
+  const d = r * Math.SQRT1_2;
+  doc.line(cx - d, cy - d, cx + d, cy + d);
+  doc.line(cx + d, cy - d, cx - d, cy + d);
+
+  const pts = [];
+  for (let i = 0; i < 8; i++){
+    const ang = (-90 + i * 45) * Math.PI / 180;
+    pts.push({ x: cx + r * Math.cos(ang), y: cy + r * Math.sin(ang) });
+  }
+  pts.push({ x: cx, y: cy });
+
+  doc.setLineWidth(0.4);
+  for (const p of pts) doc.circle(p.x, p.y, 2);
+
+  let y = 124;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text("Kernregels", margin, y);
+  y += 6;
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  const rules = [
+    "1) Plaatsen: om beurten plaats je één stuk op een leeg punt tot iedereen 3 stukken heeft.",
+    "2) Schuiven: verplaats om beurten één stuk naar een direct verbonden leeg punt (exact één stap).",
+    "3) Winnen: drie op een rij door het midden."
+  ];
+  for (const line of rules){
+    doc.text(line, margin, y);
+    y += 5;
+  }
+
+  y += 4;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text("Latijnse zinnen", margin, y);
+  y += 6;
+
+  const phrases = (CFG?.latin_learning?.phrases || []).map(p => ({
+    latin: String(p.latin || "").trim(),
+    nl: String(p.nl || "").trim()
+  })).filter(x => x.latin && x.nl);
+
+  const col1 = margin;
+  const col2 = margin + 70;
+  const rowH = 6;
+  const maxY = H - 16;
+
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "bold");
+  doc.text("Latijn", col1, y);
+  doc.text("Betekenis (NL)", col2, y);
+  y += 3;
+  doc.setLineWidth(0.3);
+  doc.line(margin, y, W - margin, y);
+  y += 4;
+
+  doc.setFont("helvetica", "normal");
+  for (const p of phrases){
+    if (y + rowH > maxY){
+      doc.addPage();
+      y = 16;
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      doc.text("Latijn", col1, y);
+      doc.text("Betekenis (NL)", col2, y);
+      y += 3;
+      doc.line(margin, y, W - margin, y);
+      y += 4;
+
+      doc.setFont("helvetica", "normal");
+    }
+    doc.text(p.latin, col1, y);
+    doc.text(p.nl, col2, y);
+    y += rowH;
+  }
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.text("© 2025 Robbe Wulgaert · aiindeklas.be", margin, H - 8);
+
+  return doc;
+}
+
+btnPrintable?.addEventListener('click', () => {
+  try{
+    const doc = buildPrintablePdf();
+    doc.save("rota-printversie.pdf");
+  }catch(e){
+    alert("PDF maken mislukt. Controleer of jsPDF geladen is.");
+  }
+});
+
+    function applyTheme(cfg){
+      const c = cfg?.theme?.colors || {};
+      const root = document.documentElement.style;
+
+      if (c.primary) root.setProperty('--brand-purple', c.primary);
+      if (c.secondary) root.setProperty('--brand-aqua', c.secondary);
+      if (c.purple_dark) root.setProperty('--brand-purple-dark', c.purple_dark);
+
+      if (c.white) root.setProperty('--brand-white', c.white);
+      if (c.bg) root.setProperty('--bg', c.bg);
+      if (c.panel) root.setProperty('--panel', c.panel);
+      if (c.ink) root.setProperty('--ink', c.ink);
+      if (c.muted) root.setProperty('--muted', c.muted);
+      if (c.card) root.setProperty('--card', c.card);
+      if (c.border) root.setProperty('--border', c.border);
+
+      if (cfg?.theme?.shadow) root.setProperty('--shadow', cfg.theme.shadow);
+      if (cfg?.theme?.layout?.topbar_h_px) root.setProperty('--topbar-h', cfg.theme.layout.topbar_h_px + "px");
+
+      const p1 = cfg?.game?.players?.[0]?.color || c.primary;
+      const p2 = cfg?.game?.players?.[1]?.color || c.secondary;
+      if (p1) root.setProperty('--p1', p1);
+      if (p2) root.setProperty('--p2', p2);
+
+      document.getElementById('brand-title').textContent = cfg?.meta?.project || "Rota";
+    }
+    applyTheme(CFG);
+
+    function getUrlParam(name){
+      const u = new URL(window.location.href);
+      return u.searchParams.get(name);
+    }
+
+    function setModeClass(){
+      const override = (getUrlParam('mode') || localStorage.getItem('rota_mode_override') || '').toLowerCase();
+      const w = Math.min(window.innerWidth, window.screen?.width || window.innerWidth);
+      const h = Math.min(window.innerHeight, window.screen?.height || window.innerHeight);
+      const portrait = h >= w;
+
+      document.body.classList.remove('mode-desktop','mode-tablet','mode-phone');
+
+      if (override === 'phone' || override === 'mobile'){
+        document.body.classList.add('mode-phone');
+      } else if (override === 'tablet'){
+        document.body.classList.add('mode-tablet');
+      } else if (override === 'desktop' || override === 'pc' || override === 'laptop'){
+        document.body.classList.add('mode-desktop');
+      } else {
+        if (w <= 599) document.body.classList.add('mode-phone');
+        else if (w <= 1024) document.body.classList.add('mode-tablet');
+        else document.body.classList.add('mode-desktop');
+      }
+
+      const root = document.documentElement.style;
+      if (document.body.classList.contains('mode-phone')){
+        root.setProperty('--board-max', '420px');
+      } else if (document.body.classList.contains('mode-tablet')){
+        root.setProperty('--board-max', portrait ? '520px' : '620px');
+      } else {
+        root.setProperty('--board-max', '620px');
+      }
+    }
+    window.addEventListener('resize', setModeClass);
+    setModeClass();
+
+    /* =========================
+       Progress store
+    ========================= */
+    const STORE_KEY = CFG?.latin_learning?.practice_engine?.persistence?.store_key || "rota_latin_progress_v1";
+    function nowIso(){ return new Date().toISOString(); }
+
+    function loadProgress(){
+      try{
+        const raw = localStorage.getItem(STORE_KEY);
+        if (!raw) return {};
+        return JSON.parse(raw) || {};
+      }catch(e){ return {}; }
+    }
+    function saveProgress(p){
+      try{ localStorage.setItem(STORE_KEY, JSON.stringify(p)); }catch(e){}
+    }
+    function ensurePhraseProgress(progress, phraseId){
+      progress[phraseId] ||= { seen:0, correct:0, wrong:0, streak:0, bucket:"new", last_seen_iso:null };
+      return progress[phraseId];
+    }
+    function markSeen(progress, phraseId){
+      const pr = ensurePhraseProgress(progress, phraseId);
+      pr.seen += 1;
+      pr.last_seen_iso = nowIso();
+      return pr;
+    }
+    function markResult(progress, phraseId, isCorrect){
+      const pr = ensurePhraseProgress(progress, phraseId);
+      if (isCorrect){
+        pr.correct += 1;
+        pr.streak += 1;
+        if (pr.streak >= 3) pr.bucket = "known";
+        else pr.bucket = pr.bucket === "new" ? "learning" : pr.bucket;
+      } else {
+        pr.wrong += 1;
+        pr.streak = 0;
+        pr.bucket = "learning";
+      }
+      pr.last_seen_iso = nowIso();
+      return pr;
+    }
+
+    /* =========================
+       Help modal
+    ========================= */
+    const helpBtn  = document.getElementById('help-btn');
+    const helpModal= document.getElementById('help-modal');
+    const closeHelp= document.getElementById('close-help');
+    const helpHowto= document.getElementById('help-howto');
+    const helpLatin= document.getElementById('help-latin');
+    const helpCulture = document.getElementById('help-culture');
+    let lastFocus = null;
+
+    function renderHowTo(cfg){
+      const rs = cfg?.game?.background?.rules_summary || {};
+      const phases = Array.isArray(rs.phases) ? rs.phases : [];
+
+      const items = [];
+      items.push(`<li><b>Stukken per speler:</b> ${escapeHtml(rs.pieces_per_player ?? "3")}</li>`);
+
+      if (phases.length){
+        const phaseLis = phases.map(p => {
+          const id = (p.id === "placement") ? "plaatsen" : (p.id === "movement" ? "schuiven" : p.id);
+          return `<li><b>${escapeHtml(id)}:</b> ${escapeHtml(p.description || "")}</li>`;
+        }).join('');
+        items.push(`<li><b>Fases:</b><ul>${phaseLis}</ul></li>`);
+      }
+
+      items.push(`<li><b>Zetregel:</b> ${escapeHtml(rs.movement_rule || "")}</li>`);
+      items.push(`<li><b>Hoe win je:</b> ${escapeHtml(rs.win_condition || "")}</li>`);
+      items.push(`<li><b>Belangrijk:</b> na het plaatsen mag je alleen naar een <b>direct verbonden</b> leeg punt (exact één stap).</li>`);
+
+      return `<ul>${items.join('')}</ul>`;
+    }
+
+    function renderLatinTable(cfg){
+      const phrases = cfg?.latin_learning?.phrases || [];
+      const rows = phrases.map(p => {
+        const latin = escapeHtml(p.latin || "");
+        const nl = escapeHtml(p.nl || "");
+        return `
+          <tr>
+            <td><b>${latin}</b></td>
+            <td>${nl}</td>
+          </tr>`;
+      }).join('');
+
+      return `
+        <table>
+          <thead>
+            <tr>
+              <th>Latijn</th>
+              <th>Betekenis (NL)</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>`;
+    }
+
+    function openHelp(){
+      helpHowto.innerHTML = renderHowTo(CFG);
+      helpLatin.innerHTML = renderLatinTable(CFG);
+
+      const bg = CFG?.game?.background?.short || "";
+      helpCulture.innerHTML = bg ? `<b>Achtergrond:</b> ${escapeHtml(bg)}` : "";
+
+      lastFocus = document.activeElement;
+      helpModal.classList.add('active');
+      closeHelp.focus();
+    }
+    function closeHelpModal(){
+      helpModal.classList.remove('active');
+      if (lastFocus && typeof lastFocus.focus === 'function') lastFocus.focus();
+    }
+
+    helpBtn.addEventListener('click', openHelp);
+    closeHelp.addEventListener('click', closeHelpModal);
+    helpModal.addEventListener('click', (e) => { if (e.target === helpModal) closeHelpModal(); });
+    document.addEventListener('keydown', (e) => {
+      if (!helpModal.classList.contains('active')) return;
+      if (e.key === 'Escape') closeHelpModal();
+    });
+
+    /* =========================
+       Board geometry + game logic
+    ========================= */
+    const nodesG  = document.getElementById('nodes');
+    const piecesG = document.getElementById('pieces');
+
+    const PTS = (() => {
+      const cx = 200, cy = 200, r = 150;
+      const pts = [];
+      for (let i=0;i<8;i++){
+        const ang = (-90 + i*45) * Math.PI/180;
+        pts.push({ id:i, x: cx + r*Math.cos(ang), y: cy + r*Math.sin(ang) });
+      }
+      pts.push({ id:8, x: cx, y: cy });
+      return pts;
+    })();
+
+    const ADJ = (() => {
+      const a = {};
+      for (let i=0;i<8;i++){
+        a[i] = new Set([ (i+1)%8, (i+7)%8, 8 ]);
+      }
+      a[8] = new Set([0,1,2,3,4,5,6,7]);
+      return a;
+    })();
+
+    const WIN_LINES = [
+      [0,8,4],
+      [2,8,6],
+      [1,8,5],
+      [7,8,3]
+    ];
+
+    const state = {
+      phase: "placement",
+      prevPhase: "placement",
+      phaseAnnounced: false,
+      current: "p1",
+      pieces: {},
+      placed: { p1:0, p2:0 },
+      selected: null,
+      locked: true,
+      winner: null,
+      names: { p1: "Speler 1", p2: "Speler 2" },
+      drillsUsedThisMatch: 0,
+      maxDrills: CFG?.latin_learning?.practice_engine?.session_limits?.max_total_drills_per_match ?? 6
+    };
+
+    function resetState(){
+      state.phase = "placement";
+      state.prevPhase = "placement";
+      state.phaseAnnounced = false;
+      state.current = "p1";
+      state.pieces = {};
+      state.placed = { p1:0, p2:0 };
+      state.selected = null;
+      state.winner = null;
+      state.locked = true;
+      state.drillsUsedThisMatch = 0;
+      renderAll();
+    }
+
+    function otherPlayer(p){ return p === "p1" ? "p2" : "p1"; }
+    function inPlacementDone(){ return state.placed.p1 >= 3 && state.placed.p2 >= 3; }
+
+    function updatePhase(){
+      state.prevPhase = state.phase;
+      state.phase = inPlacementDone() ? "movement" : "placement";
+      if (state.prevPhase !== state.phase && state.phase === "movement"){
+        state.phaseAnnounced = true;
+      }
+    }
+
+    function checkWinner(){
+      for (const line of WIN_LINES){
+        const [a,b,c] = line;
+        const pa = state.pieces[a];
+        if (!pa) continue;
+        if (state.pieces[b] === pa && state.pieces[c] === pa){
+          state.winner = pa;
+          return pa;
+        }
+      }
+      return null;
+    }
+
+    function pointEmpty(pid){ return !state.pieces[pid]; }
+
+    function selectableDestinations(fromPid){
+      const s = ADJ[fromPid];
+      if (!s) return [];
+      return [...s].filter(pid => pointEmpty(pid));
+    }
+
+    function canMove(fromPid, toPid){
+      if (!ADJ[fromPid] || !ADJ[fromPid].has(toPid)) return false;
+      if (!pointEmpty(toPid)) return false;
+      return true;
+    }
+
+    function placePiece(pid){
+      if (state.phase !== "placement") return false;
+      if (!pointEmpty(pid)) return false;
+      if (state.placed[state.current] >= 3) return false;
+
+      state.pieces[pid] = state.current;
+      state.placed[state.current] += 1;
+
+      updatePhase();
+      checkWinner();
+
+      if (!state.winner){
+        state.current = otherPlayer(state.current);
+      }
+
+      return true;
+    }
+
+    function movePiece(fromPid, toPid){
+      if (state.phase !== "movement") return false;
+      if (state.pieces[fromPid] !== state.current) return false;
+      if (!canMove(fromPid, toPid)) return false;
+
+      delete state.pieces[fromPid];
+      state.pieces[toPid] = state.current;
+
+      state.selected = null;
+      checkWinner();
+
+      if (!state.winner){
+        state.current = otherPlayer(state.current);
+      }
+
+      return true;
+    }
+
+    /* =========================
+       SVG rendering
+    ========================= */
+    function clearSvgGroup(g){
+      while (g.firstChild) g.removeChild(g.firstChild);
+    }
+    function mk(tag, attrs){
+      const el = document.createElementNS("http://www.w3.org/2000/svg", tag);
+      for (const k in attrs) el.setAttribute(k, attrs[k]);
+      return el;
+    }
+
+    function drawNodes(){
+      clearSvgGroup(nodesG);
+      for (const p of PTS){
+        const g = mk('g', { class:'node', 'data-id': p.id });
+        const ring = mk('circle', { class:'node-ring', cx:p.x, cy:p.y, r:16 });
+        const hit  = mk('circle', { class:'node-hit', cx:p.x, cy:p.y, r:26 });
+        g.appendChild(ring);
+        g.appendChild(hit);
+
+        g.addEventListener('click', () => onNodeClick(p.id));
+        g.addEventListener('touchend', (e) => { e.preventDefault(); onNodeClick(p.id); }, { passive:false });
+
+        nodesG.appendChild(g);
+      }
+    }
+
+    function drawPieces(){
+      clearSvgGroup(piecesG);
+      for (const pidStr of Object.keys(state.pieces)){
+        const pid = Number(pidStr);
+        const owner = state.pieces[pid];
+        const p = PTS.find(x => x.id === pid);
+        if (!p) continue;
+
+        const shadow = mk('circle', { class:'pieceShadow', cx:p.x, cy:p.y, r:14 });
+        const piece  = mk('circle', { class:`piece ${owner}`, cx:p.x, cy:p.y, r:14 });
+        piecesG.appendChild(shadow);
+        piecesG.appendChild(piece);
+      }
+    }
+
+    function paintNodeStates(){
+      const nodeEls = nodesG.querySelectorAll('.node');
+      const selectableSet = new Set();
+
+      if (!state.locked && !state.winner){
+        if (state.phase === "placement"){
+          if (state.placed[state.current] < 3){
+            for (const p of PTS) if (pointEmpty(p.id)) selectableSet.add(p.id);
+          }
+        } else {
+          if (state.selected != null){
+            for (const d of selectableDestinations(state.selected)) selectableSet.add(d);
+          } else {
+            for (const pidStr of Object.keys(state.pieces)){
+              const pid = Number(pidStr);
+              if (state.pieces[pid] !== state.current) continue;
+              if (selectableDestinations(pid).length) selectableSet.add(pid);
+            }
+          }
+        }
+      }
+
+      nodeEls.forEach(el => {
+        const id = Number(el.getAttribute('data-id'));
+        const ring = el.querySelector('.node-ring');
+        ring.classList.remove('selectable','selected');
+
+        if (state.selected === id) ring.classList.add('selected');
+        else if (selectableSet.has(id)) ring.classList.add('selectable');
+      });
+    }
+
+    /* =========================
+       UI
+    ========================= */
+    const elTurnName = document.getElementById('turn-name');
+    const elTurnDot  = document.getElementById('turn-dot');
+    const elPhaseName= document.getElementById('phase-name');
+    const elActionHint = document.getElementById('actionHint');
+    const elThreeHint = document.getElementById('threeHint');
+
+    const elP1Name = document.getElementById('p1-name');
+    const elP2Name = document.getElementById('p2-name');
+    const elP1Badge= document.getElementById('p1-badge');
+    const elP2Badge= document.getElementById('p2-badge');
+
+    const elTP1Name = document.getElementById('t-p1-name');
+    const elTP2Name = document.getElementById('t-p2-name');
+    const elTP1Badge= document.getElementById('t-p1-badge');
+    const elTP2Badge= document.getElementById('t-p2-badge');
+
+    const elRulesShort = document.getElementById('rules-short');
+    const elRulesMove  = document.getElementById('rules-move');
+    const elRulesWin   = document.getElementById('rules-win');
+
+    const p1Pucks = document.getElementById('p1-pucks');
+    const p2Pucks = document.getElementById('p2-pucks');
+    const tp1Pucks = document.getElementById('t-p1-pucks');
+    const tp2Pucks = document.getElementById('t-p2-pucks');
+
+    function phaseLabel(){
+      return state.phase === "placement" ? UI_TEXT.phase_placement : UI_TEXT.phase_movement;
+    }
+
+    function renderPucks(container, player, remaining){
+      if (!container) return;
+      container.innerHTML = "";
+      for (let i=0;i<3;i++){
+        const s = document.createElement('span');
+        s.className = `puck ${player} ${i < remaining ? 'on' : ''}`;
+        container.appendChild(s);
+      }
+    }
+
+    function updateTurnThemeVars(){
+      const root = document.documentElement.style;
+      if (state.current === "p1"){
+        root.setProperty('--turn-col', getComputedStyle(document.documentElement).getPropertyValue('--p1').trim() || '#5200FF');
+        root.setProperty('--turn-col-soft', 'rgba(82,0,255,0.14)');
+      } else {
+        root.setProperty('--turn-col', getComputedStyle(document.documentElement).getPropertyValue('--p2').trim() || '#3DFFD0');
+        root.setProperty('--turn-col-soft', 'rgba(61,255,208,0.22)');
+      }
+    }
+
+    function applyTurnStyling(){
+      const cur = state.current;
+
+      document.body.classList.toggle('turn-p1', cur === "p1");
+      document.body.classList.toggle('turn-p2', cur === "p2");
+      document.body.classList.toggle('game-locked', !!state.locked);
+      document.body.classList.toggle('game-over', !!state.winner);
+
+      updateTurnThemeVars();
+
+      const zones = document.querySelectorAll('.player-zone[data-player]');
+      const locked = !!state.locked || !!state.winner;
+
+      zones.forEach(z => {
+        const zp = z.getAttribute('data-player');
+        z.classList.remove('active','inactive');
+        if (locked){
+          z.classList.add('inactive');
+          return;
+        }
+        if (zp === cur) z.classList.add('active');
+        else z.classList.add('inactive');
+      });
+    }
+
+    function updateTopbar(){
+      elTurnName.textContent = state.names[state.current] || (state.current === "p1" ? "Speler 1" : "Speler 2");
+      elTurnDot.classList.toggle('p1', state.current === "p1");
+      elTurnDot.classList.toggle('p2', state.current === "p2");
+      elPhaseName.textContent = phaseLabel();
+
+      elP1Name.textContent = state.names.p1;
+      elP2Name.textContent = state.names.p2;
+      elTP1Name.textContent = state.names.p1;
+      elTP2Name.textContent = state.names.p2;
+
+      const rem1 = Math.max(0, 3 - state.placed.p1);
+      const rem2 = Math.max(0, 3 - state.placed.p2);
+
+      if (state.phase === "placement"){
+        elP1Badge.textContent = `${rem1} over`;
+        elP2Badge.textContent = `${rem2} over`;
+        elTP1Badge.textContent = `${rem1} over`;
+        elTP2Badge.textContent = `${rem2} over`;
+      } else {
+        elP1Badge.textContent = `3 stukken`;
+        elP2Badge.textContent = `3 stukken`;
+        elTP1Badge.textContent = `3 stukken`;
+        elTP2Badge.textContent = `3 stukken`;
+      }
+
+      renderPucks(p1Pucks, 'p1', rem1);
+      renderPucks(p2Pucks, 'p2', rem2);
+      renderPucks(tp1Pucks, 'p1', rem1);
+      renderPucks(tp2Pucks, 'p2', rem2);
+
+      if (state.winner){
+        elTurnName.textContent = state.names[state.winner];
+        elPhaseName.textContent = "einde";
+      }
+    }
+
+    function updateHints(){
+      if (state.locked){
+        elThreeHint.textContent = "";
+        return;
+      }
+
+      if (state.winner){
+        elActionHint.textContent = `Finis lūdī. Winnaar: ${state.names[state.winner]}.`;
+        elThreeHint.textContent = UI_TEXT.hint_win;
+        return;
+      }
+
+      if (state.phase === "placement"){
+        elActionHint.textContent = UI_TEXT.hint_place;
+      } else {
+        if (state.phaseAnnounced){
+          elActionHint.textContent = "Fase schuiven: je mag alleen naar een direct verbonden leeg punt (exact één stap).";
+          state.phaseAnnounced = false;
+        } else if (state.selected == null){
+          elActionHint.textContent = UI_TEXT.hint_select;
+        } else {
+          elActionHint.textContent = UI_TEXT.hint_move;
+        }
+      }
+
+      elThreeHint.textContent = CFG?.game?.ui_hooks?.show_three_in_row_hint ? UI_TEXT.hint_win : "";
+    }
+
+    function syncRulesBox(){
+      const bg = CFG?.game?.background?.short || "";
+      const rs = CFG?.game?.background?.rules_summary || {};
+      elRulesShort.textContent = bg;
+      elRulesMove.textContent = rs.movement_rule || "—";
+      elRulesWin.textContent = rs.win_condition || "—";
+    }
+
+    function renderAll(){
+      updatePhase();
+      drawPieces();
+      paintNodeStates();
+      updateTopbar();
+      updateHints();
+      applyTurnStyling();
+    }
+
+    syncRulesBox();
+    drawNodes();
+    renderAll();
+
+    /* =========================
+       Node click handler
+    ========================= */
+    function onNodeClick(pid){
+      if (state.locked) return;
+      if (state.winner) return;
+
+      if (state.phase === "placement"){
+        const ok = placePiece(pid);
+        if (ok){
+          renderAll();
+          if (checkWinner()) triggerEndSequence();
+        }
+        return;
+      }
+
+      if (state.selected == null){
+        if (state.pieces[pid] === state.current && selectableDestinations(pid).length){
+          state.selected = pid;
+          renderAll();
+        }
+        return;
+      }
+
+      if (pid === state.selected){
+        state.selected = null;
+        renderAll();
+        return;
+      }
+
+      if (state.pieces[pid] === state.current && selectableDestinations(pid).length){
+        state.selected = pid;
+        renderAll();
+        return;
+      }
+
+      const ok = movePiece(state.selected, pid);
+      if (ok){
+        renderAll();
+        if (checkWinner()) triggerEndSequence();
+      } else {
+        renderAll();
+      }
+    }
+
+    /* =========================
+       Micro-drill engine
+    ========================= */
+    const overlay = document.getElementById('overlay');
+    const overlayBody = document.getElementById('overlay-body');
+    const overlayNext = document.getElementById('overlay-next');
+    const overlayStep = document.getElementById('overlay-step');
+    const promptLatin = document.getElementById('promptLatin');
+    const promptHint  = document.getElementById('promptHint');
+    const overlayNote = document.getElementById('overlay-note');
+
+    let sequence = null;
+    let seqIndex = 0;
+    let currentDrill = null;
+
+    function openOverlay(){
+      overlay.classList.add('active');
+      overlayNext.focus();
+    }
+    function closeOverlay(){
+      overlay.classList.remove('active');
+    }
+
+    function getPhraseById(id){
+      return (CFG?.latin_learning?.phrases || []).find(p => p.id === id) || null;
+    }
+
+    function setPrompt(text){
+      promptLatin.textContent = text || "—";
+      promptHint.textContent = "";
+      promptHint.style.display = "none";
+    }
+
+    function shuffle(arr){
+      const a = arr.slice();
+      for (let i=a.length-1;i>0;i--){
+        const j = Math.floor(Math.random()*(i+1));
+        [a[i],a[j]] = [a[j],a[i]];
+      }
+      return a;
+    }
+
+    function buildMcqMatch(phraseId){
+      const p = getPhraseById(phraseId);
+      const correct = p?.nl || "";
+      const pool = (CFG?.latin_learning?.phrases || [])
+        .filter(x => x.id !== phraseId)
+        .map(x => x.nl || "")
+        .filter(Boolean);
+
+      const wrongs = shuffle(pool).slice(0, 3);
+      const options = shuffle([correct, ...wrongs]).slice(0, 4);
+
+      const wrap = document.createElement('div');
+      wrap.className = "choices";
+      let answered = false;
+
+      for (const opt of options){
+        const btn = document.createElement('button');
+        btn.className = "choice";
+        btn.type = "button";
+        btn.textContent = opt || "—";
+        btn.addEventListener('click', () => {
+          if (answered) return;
+          answered = true;
+
+          const isCorrect = (opt === correct);
+          btn.classList.add(isCorrect ? "correct" : "wrong");
+
+          const prog = loadProgress();
+          markSeen(prog, phraseId);
+          markResult(prog, phraseId, isCorrect);
+          saveProgress(prog);
+
+          overlayNote.textContent = isCorrect ? "Juist." : "Fout.";
+          overlayNext.disabled = false;
+        });
+        wrap.appendChild(btn);
+      }
+      return wrap;
+    }
+
+    function buildTapToConfirm(phraseId){
+      const box = document.createElement('div');
+      box.className = "phaseBox";
+      box.innerHTML = `<b>Opdracht:</b> lees de zin hardop en ga verder.`;
+      overlayNote.textContent = "Verder om door te gaan.";
+
+      const prog = loadProgress();
+      markSeen(prog, phraseId);
+      markResult(prog, phraseId, true);
+      saveProgress(prog);
+
+      return box;
+    }
+
+    function buildFillBlankName(){
+      const wrap = document.createElement('div');
+      wrap.className = "inputRow";
+
+      const i1 = document.createElement('input');
+      i1.className = "textInput";
+      i1.placeholder = "Naam speler 1";
+      i1.autocomplete = "off";
+
+      const i2 = document.createElement('input');
+      i2.className = "textInput";
+      i2.placeholder = "Naam speler 2";
+      i2.autocomplete = "off";
+
+      wrap.appendChild(i1);
+      wrap.appendChild(i2);
+
+      overlayNote.textContent = "Vul beide namen in.";
+      overlayNext.disabled = true;
+
+      function validate(){
+        const a = (i1.value || "").trim();
+        const b = (i2.value || "").trim();
+        overlayNext.disabled = !(a.length >= 1 && b.length >= 1);
+      }
+      i1.addEventListener('input', validate);
+      i2.addEventListener('input', validate);
+
+      wrap.__commit = () => {
+        state.names.p1 = (i1.value || "Speler 1").trim();
+        state.names.p2 = (i2.value || "Speler 2").trim();
+        renderAll();
+
+        const prog = loadProgress();
+        markSeen(prog, "mihi_nomen_est");
+        markResult(prog, "mihi_nomen_est", true);
+        saveProgress(prog);
+      };
+
+      return wrap;
+    }
+
+    function buildMcqResponse(promptPhraseId, optionsPhraseIds){
+      const wrap = document.createElement('div');
+      wrap.className = "choices";
+
+      let answered = false;
+      const opts = optionsPhraseIds.map(id => getPhraseById(id)).filter(Boolean);
+      const items = shuffle(opts).slice(0, 2);
+
+      for (const p of items){
+        const btn = document.createElement('button');
+        btn.type = "button";
+        btn.className = "choice";
+        btn.textContent = p.latin;
+        btn.addEventListener('click', () => {
+          if (answered) return;
+          answered = true;
+
+          const prog = loadProgress();
+          markSeen(prog, promptPhraseId);
+          markResult(prog, promptPhraseId, true);
+          markSeen(prog, p.id);
+          markResult(prog, p.id, true);
+          saveProgress(prog);
+
+          btn.classList.add("correct");
+          overlayNote.textContent = "Antwoord gekozen.";
+          overlayNext.disabled = false;
+        });
+        wrap.appendChild(btn);
+      }
+
+      overlayNext.disabled = true;
+      overlayNote.textContent = "Kies een antwoord in het Latijn.";
+      return wrap;
+    }
+
+    function buildWordOrder(phraseId){
+      const def = WORD_ORDER[phraseId];
+      const p = getPhraseById(phraseId);
+      const targetTokens = def?.tokens || (p?.latin ? [p.latin] : []);
+      const prompt = def?.prompt || "Zet de woorden in de juiste volgorde.";
+
+      const wrap = document.createElement('div');
+      wrap.style.display = "flex";
+      wrap.style.flexDirection = "column";
+      wrap.style.gap = "12px";
+
+      const answerLine = document.createElement('div');
+      answerLine.className = "answerLine";
+      answerLine.textContent = "—";
+
+      const bank = document.createElement('div');
+      bank.className = "bank";
+
+      const actions = document.createElement('div');
+      actions.style.display = "flex";
+      actions.style.gap = "10px";
+      actions.style.flexWrap = "wrap";
+
+      const btnClear = document.createElement('button');
+      btnClear.type = "button";
+      btnClear.className = "miniBtn";
+      btnClear.textContent = "Wis";
+
+      actions.appendChild(btnClear);
+
+      const tokens = shuffle(targetTokens.slice());
+      const chosen = [];
+
+      function refresh(){
+        answerLine.textContent = chosen.length ? chosen.join(" ") : "—";
+        overlayNext.disabled = true;
+
+        const built = chosen.join(" ");
+        const target = targetTokens.join(" ");
+        if (built === target){
+          overlayNext.disabled = false;
+          overlayNote.textContent = "Juist opgebouwd.";
+          const prog = loadProgress();
+          markSeen(prog, phraseId);
+          markResult(prog, phraseId, true);
+          saveProgress(prog);
+        } else {
+          overlayNote.textContent = "Bouw de zin door woorden te kiezen.";
+        }
+      }
+
+      function reset(){
+        chosen.length = 0;
+        bank.querySelectorAll('button').forEach(b => b.disabled = false);
+        refresh();
+      }
+
+      btnClear.addEventListener('click', reset);
+
+      for (const t of tokens){
+        const b = document.createElement('button');
+        b.type = "button";
+        b.className = "tile";
+        b.textContent = t;
+        b.addEventListener('click', () => {
+          if (b.disabled) return;
+          b.disabled = true;
+          chosen.push(t);
+          refresh();
+        });
+        bank.appendChild(b);
+      }
+
+      wrap.appendChild(document.createElement('div'));
+      wrap.appendChild(answerLine);
+      wrap.appendChild(bank);
+      wrap.appendChild(actions);
+
+      // prompt zet je hierboven (niet het Latijn zelf)
+      setPrompt(prompt);
+      return wrap;
+    }
+
+    function runStep(step){
+      overlayNext.disabled = true;
+      overlayNote.textContent = "";
+
+      const phraseId = step.phrase_id || step.phraseId || null;
+      const drill = step.drill || {};
+      const t = drill.type;
+
+      overlayBody.innerHTML = "";
+      overlayStep.textContent = `${sequence.labelPrefix} ${seqIndex+1}/${sequence.steps.length}`;
+
+      const p = getPhraseById(phraseId);
+
+      if (t === "mcq_match"){
+        setPrompt(p?.latin || "—");
+        overlayBody.appendChild(buildMcqMatch(phraseId));
+        overlayNext.disabled = true;
+        overlayNote.textContent = "Kies de juiste betekenis.";
+        return;
+      }
+
+      if (t === "fill_blank_name"){
+        setPrompt(getPhraseById("mihi_nomen_est")?.latin || "Mihi nomen est …");
+        const ui = buildFillBlankName();
+        overlayBody.appendChild(ui);
+        currentDrill = { type:t, phraseId:"mihi_nomen_est", ui };
+        return;
+      }
+
+      if (t === "mcq_response"){
+        setPrompt(getPhraseById(drill.prompt_phrase_id)?.latin || "—");
+        overlayBody.appendChild(buildMcqResponse(drill.prompt_phrase_id, drill.options_phrase_ids));
+        return;
+      }
+
+      if (t === "word_order"){
+        overlayBody.appendChild(buildWordOrder(phraseId));
+        overlayNext.disabled = true;
+        return;
+      }
+
+      if (t === "tap_to_confirm"){
+        setPrompt(p?.latin || "—");
+        overlayBody.appendChild(buildTapToConfirm(phraseId));
+        overlayNext.disabled = false;
+        return;
+      }
+
+      setPrompt(p?.latin || "—");
+      overlayBody.appendChild(buildTapToConfirm(phraseId));
+      overlayNext.disabled = false;
+    }
+
+    function startSequence(seq){
+      sequence = seq;
+      seqIndex = 0;
+      currentDrill = null;
+      openOverlay();
+      runStep(sequence.steps[seqIndex]);
+    }
+
+    function finishSequence(){
+      closeOverlay();
+      sequence = null;
+      seqIndex = 0;
+      currentDrill = null;
+    }
+
+    overlayNext.addEventListener('click', () => {
+      if (!sequence) { closeOverlay(); return; }
+
+      if (currentDrill?.type === "fill_blank_name" && currentDrill.ui?.__commit){
+        currentDrill.ui.__commit();
+        currentDrill = null;
+      }
+
+      seqIndex += 1;
+      if (seqIndex >= sequence.steps.length){
+        finishSequence();
+
+        if (!state.winner && state.locked){
+          state.locked = false;
+          renderAll();
+        }
+        return;
+      }
+      runStep(sequence.steps[seqIndex]);
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (!overlay.classList.contains('active')) return;
+      if (e.key === 'Escape'){
+        if (!state.locked) closeOverlay();
+      }
+      if (e.key === 'Enter' && !overlayNext.disabled){
+        overlayNext.click();
+      }
+    });
+
+    function buildPreMatchSequence(){
+      const steps = CFG?.latin_learning?.ui_integration?.pre_match_sequence?.steps || [];
+      return { steps, labelPrefix: UI_TEXT.gate_label };
+    }
+
+    function buildPostMatchSequence(){
+      const steps = CFG?.latin_learning?.ui_integration?.post_match_sequence?.steps || [];
+      return { steps, labelPrefix: UI_TEXT.end_label };
+    }
+
+    function triggerEndSequence(){
+      if (!state.winner) return;
+      state.locked = true;
+      renderAll();
+      startSequence(buildPostMatchSequence());
+    }
+
+    /* =========================
+       Reset / boot
+    ========================= */
+    const btnReset = document.getElementById('btn-reset');
+
+    btnReset.addEventListener('click', () => {
+      resetState();
+      startSequence(buildPreMatchSequence());
+    });
+
+    (function boot(){
+      resetState();
+
+      const showGate = !!CFG?.game?.ui_hooks?.show_rule_overlay_on_first_launch;
+      if (showGate){
+        startSequence(buildPreMatchSequence());
+      } else {
+        state.locked = false;
+        renderAll();
+      }
+    })();
+  </script>
+</body>
+</html>
