@@ -881,12 +881,12 @@ latin_learning:
       drill_modes: ["word_order"]
 
     - id: "finis_ludi"
-      latin: "Finis lūdī."
+      latin: "Finis ludi."
       english: "End of the game."
       drill_modes: ["tap_to_confirm"]
 
     - id: "vinco"
-      latin: "Vincō!"
+      latin: "Vinco!"
       english: "I win!"
       drill_modes: ["mcq_match", "tap_to_confirm"]
 
@@ -1246,9 +1246,6 @@ assets:
     }
     applyTheme(CFG);
 
-    /* =========================
-       Audio (uitspraak)
-    ========================= */
     const AUDIO_CFG = {
       enabled: !!(CFG?.assets?.audio?.enabled),
       basePath: String(CFG?.assets?.audio?.base_path || "./media/"),
@@ -1496,7 +1493,7 @@ assets:
       const bg = CFG?.game?.background?.short || "";
       setHTML(helpCulture, bg ? `<b>Achtergrond:</b> ${escapeHtml(bg)}` : "");
 
-      // Inject icon SVG into newly-rendered buttons
+  
       if (AUDIO_CFG.enabled && helpLatin){
         helpLatin.querySelectorAll('button[data-audio]').forEach(b => { b.innerHTML = AUDIO_ICON_SVG; });
       }
@@ -1530,7 +1527,7 @@ assets:
       });
     }
 
-    // Delegated audio handler (help table)
+    
     helpLatin?.addEventListener('click', async (e) => {
       const btn = e.target.closest('button[data-audio]');
       if (!btn) return;
@@ -2573,7 +2570,7 @@ assets:
       startSequence(seq);
     }
 
-    // Practice picker
+  
     const LAST_PRACTICE_KEY = "rota_last_practice_phrase_v1";
     state.lastPracticePhraseId = localStorage.getItem(LAST_PRACTICE_KEY) || null;
 
@@ -2630,9 +2627,6 @@ assets:
       });
     });
 
-    /* =========================
-       Reset / first launch gate
-    ========================= */
     const btnReset = document.getElementById('btn-reset');
 
     btnReset.addEventListener('click', () => {
@@ -2654,4 +2648,5 @@ assets:
   </script>
 </body>
 </html>
+
 
