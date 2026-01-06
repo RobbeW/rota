@@ -2606,6 +2606,36 @@ assets:
       return { steps, labelPrefix: UI_TEXT.overlay_gate };
     }
 
+function buildResetGateSequence(){
+  const phrases = (CFG?.latin_learning?.phrases || []).filter(p => p && p.id);
+
+  const excluded = new Set(["mihi_nomen_est", "finis_ludi", "vinco", "vincis"]);
+  let pool = phrases.filter(p => !excluded.has(p.id));
+
+  if (!pool.length) pool = phrases.filter(p => p.id !== "mihi_nomen_est");
+  if (!pool.length) pool = [{ id:"salve", drill_modes:["mcq_match"] }];
+
+  const picked = pool[Math.floor(Math.random() * pool.length)];
+
+  const allowed = ["mcq_match","word_order","tap_to_confirm","read_aloud"];
+  const modes = Array.isArray(picked.drill_modes) ? picked.drill_modes : [];
+  const available = modes.filter(m => allowed.includes(m));
+
+  let drillType = "mcq_match";
+  const r = Math.random();
+  if (available.includes("word_order") && r < 0.30) drillType = "word_order";
+  else if (available.includes("read_aloud") && r < 0.42) drillType = "read_aloud";
+  else if (available.includes("tap_to_confirm") && r < 0.54) drillType = "tap_to_confirm";
+  else if (available.includes("mcq_match")) drillType = "mcq_match";
+  else if (available.length) drillType = available[0];
+
+  return {
+    steps: [{ phrase_id: picked.id, drill: { type: drillType } }],
+    labelPrefix: UI_TEXT.overlay_gate
+  };
+}
+
+
     function buildPostMatchSequence(outcome){
       const stepsDef = CFG?.latin_learning?.ui_integration?.post_match_sequence?.steps || [];
       const steps = [];
@@ -2686,12 +2716,11 @@ assets:
     });
 
     const btnReset = document.getElementById('btn-reset');
-
     btnReset.addEventListener('click', () => {
       resetState();
-      const seq = buildPreMatchSequence();
-      startSequence(seq);
+      startSequence(buildResetGateSequence());
     });
+
 
     (function boot(){
       resetState();
@@ -2706,6 +2735,7 @@ assets:
   </script>
 </body>
 </html>
+
 
 
 
