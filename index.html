@@ -1777,14 +1777,14 @@ assets:
   return doc;
 }
 
-    btnPrintable?.addEventListener('click', () => {
-      try{
-        const doc = buildPrintablePdf();
-        doc.save("rota-printversie.pdf");
-      }catch(e){
-        alert("PDF maken mislukt. Controleer of jsPDF geladen is.");
-      }
-    });
+    btnPrintable?.addEventListener('click', async () => {
+  try{
+    const doc = await buildPrintablePdf();
+    doc.save("rota-printversie.pdf");
+  }catch(e){
+    alert("PDF maken mislukt. Controleer of jsPDF geladen is.");
+  }
+});
 
     const nodesG  = document.getElementById('nodes');
     const piecesG = document.getElementById('pieces');
@@ -2792,6 +2792,7 @@ function buildResetGateSequence(){
   </script>
 </body>
 </html>
+
 
 
 
