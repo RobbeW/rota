@@ -1597,128 +1597,185 @@ assets:
 
     const btnPrintable = document.getElementById('btn-printable');
 
-    function buildPrintablePdf(){
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+    async function buildPrintablePdf(){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
 
-      const W = doc.internal.pageSize.getWidth();
-      const H = doc.internal.pageSize.getHeight();
-      const margin = 12;
+  const W = doc.internal.pageSize.getWidth();
+  const H = doc.internal.pageSize.getHeight();
+  const margin = 12;
+
+  const PURPLE = [82, 0, 255]; // #5200FF
+
+  const setPurple = () => doc.setTextColor(PURPLE[0], PURPLE[1], PURPLE[2]);
+  const setBlack  = () => doc.setTextColor(0, 0, 0);
+
+  async function loadPngAsDataUrl(url){
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) throw new Error("QR fetch failed: " + res.status);
+    const blob = await res.blob();
+    return await new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result);
+      r.onerror = reject;
+      r.readAsDataURL(blob);
+    });
+  }
+
+  // Title
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(18);
+  setPurple();
+  doc.text("Rota", margin, 16);
+  setBlack();
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.text(
+    "Speel offline met het bord hieronder. Noteer namen en gebruik de zinnenlijst tijdens het spelen.",
+    margin,
+    22
+  );
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.text("Speler 1:", margin, 32);
+  doc.line(margin + 20, 32, margin + 88, 32);
+
+  doc.text("Speler 2:", margin + 95, 32);
+  doc.line(margin + 115, 32, W - margin, 32);
+
+  const r  = 45;
+  const cx = W / 2;
+  const nameY = 32;
+  const gapAfterNames = 14;
+  const boardTop = nameY + gapAfterNames;
+  const cy = boardTop + r;
+  const boardBottom = cy + r;
+
+  doc.setLineWidth(0.6);
+  doc.circle(cx, cy, r);
+
+  doc.setLineWidth(0.5);
+  doc.line(cx, cy - r, cx, cy + r);
+  doc.line(cx - r, cy, cx + r, cy);
+
+  const d = r * Math.SQRT1_2;
+  doc.line(cx - d, cy - d, cx + d, cy + d);
+  doc.line(cx + d, cy - d, cx - d, cy + d);
+
+  const pts = [];
+  for (let i = 0; i < 8; i++){
+    const ang = (-90 + i * 45) * Math.PI / 180;
+    pts.push({ x: cx + r * Math.cos(ang), y: cy + r * Math.sin(ang) });
+  }
+  pts.push({ x: cx, y: cy });
+
+  doc.setLineWidth(0.4);
+  for (const p of pts) doc.circle(p.x, p.y, 2);
+
+  let y = Math.max(124, boardBottom + 14);
+
+  // Spelregels heading (purple)
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  setPurple();
+  doc.text("Spelregels", margin, y);
+  setBlack();
+  y += 6;
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  const rules = [
+    "1) Fase 1 - Plaatsen: om beurten plaats je één stuk op een leeg punt tot iedereen 3 stukken heeft.",
+    "2) Fase 2 - Schuiven: verplaats om beurten één stuk naar een direct verbonden leeg punt (exact één stap).",
+    "3) Winnen: drie op een rij door het midden."
+  ];
+  for (const line of rules){
+    doc.text(line, margin, y);
+    y += 5;
+  }
+
+  y += 4;
+
+  // Latijnse zinnen heading (purple)
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  setPurple();
+  doc.text("Latijnse zinnen", margin, y);
+  setBlack();
+  y += 6;
+
+  const phrases = (CFG?.latin_learning?.phrases || [])
+    .map(p => ({
+      latin: String(p.latin || "").trim(),
+      nl: String(p.nl || "").trim()
+    }))
+    .filter(x => x.latin && x.nl);
+
+  const col1 = margin;
+  const col2 = margin + 70;
+  const rowH = 6;
+  const maxY = H - 16;
+
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "bold");
+  setPurple();
+  doc.text("Latijn", col1, y);
+  doc.text("Betekenis", col2, y);
+  setBlack();
+  y += 3;
+
+  doc.setLineWidth(0.3);
+  doc.line(margin, y, W - margin, y);
+  y += 4;
+
+  doc.setFont("helvetica", "normal");
+  for (const p of phrases){
+    if (y + rowH > maxY){
+      doc.addPage();
+      y = 16;
 
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(18);
-      doc.text("Rota — printversie", margin, 16);
-
-      doc.setFont("helvetica", "normal");
       doc.setFontSize(10);
-      doc.text("Speel offline met het bord hieronder. Noteer namen en gebruik de zinnenlijst.", margin, 22);
-
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(11);
-      doc.text("Speler 1:", margin, 32);
-      doc.line(margin + 20, 32, margin + 88, 32);
-
-      doc.text("Speler 2:", margin + 95, 32);
-      doc.line(margin + 115, 32, W - margin, 32);
-
-      const r  = 45;
-      const cx = W / 2;
-      const nameY = 32;
-      const gapAfterNames = 14;
-      const boardTop = nameY + gapAfterNames;
-      const cy = boardTop + r;
-      const boardBottom = cy + r;
-
-      doc.setLineWidth(0.6);
-      doc.circle(cx, cy, r);
-
-      doc.setLineWidth(0.5);
-      doc.line(cx, cy - r, cx, cy + r);
-      doc.line(cx - r, cy, cx + r, cy);
-
-      const d = r * Math.SQRT1_2;
-      doc.line(cx - d, cy - d, cx + d, cy + d);
-      doc.line(cx + d, cy - d, cx - d, cy + d);
-
-      const pts = [];
-      for (let i = 0; i < 8; i++){
-        const ang = (-90 + i * 45) * Math.PI / 180;
-        pts.push({ x: cx + r * Math.cos(ang), y: cy + r * Math.sin(ang) });
-      }
-      pts.push({ x: cx, y: cy });
-
-      doc.setLineWidth(0.4);
-      for (const p of pts) doc.circle(p.x, p.y, 2);
-
-      let y = Math.max(124, boardBottom + 14);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(12);
-      doc.text("Kernregels", margin, y);
-      y += 6;
-
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(10);
-      const rules = [
-        "1) Plaatsen: om beurten plaats je één stuk op een leeg punt tot iedereen 3 stukken heeft.",
-        "2) Schuiven: verplaats om beurten één stuk naar een direct verbonden leeg punt (exact één stap).",
-        "3) Winnen: drie op een rij door het midden."
-      ];
-      for (const line of rules){
-        doc.text(line, margin, y);
-        y += 5;
-      }
-
-      y += 4;
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(12);
-      doc.text("Latijnse zinnen", margin, y);
-      y += 6;
-
-      const phrases = (CFG?.latin_learning?.phrases || []).map(p => ({
-        latin: String(p.latin || "").trim(),
-        nl: String(p.nl || "").trim()
-      })).filter(x => x.latin && x.nl);
-
-      const col1 = margin;
-      const col2 = margin + 70;
-      const rowH = 6;
-      const maxY = H - 16;
-
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "bold");
+      setPurple();
       doc.text("Latijn", col1, y);
       doc.text("Betekenis", col2, y);
+      setBlack();
       y += 3;
-      doc.setLineWidth(0.3);
+
       doc.line(margin, y, W - margin, y);
       y += 4;
 
       doc.setFont("helvetica", "normal");
-      for (const p of phrases){
-        if (y + rowH > maxY){
-          doc.addPage();
-          y = 16;
-
-          doc.setFont("helvetica", "bold");
-          doc.setFontSize(10);
-          doc.text("Latijn", col1, y);
-          doc.text("Betekenis", col2, y);
-          y += 3;
-          doc.line(margin, y, W - margin, y);
-          y += 4;
-          doc.setFont("helvetica", "normal");
-        }
-        doc.text(p.latin, col1, y);
-        doc.text(p.nl, col2, y);
-        y += rowH;
-      }
-
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(9);
-      doc.text("© 2026 Robbe Wulgaert · aiindeklas.be", margin, H - 8);
-
-      return doc;
     }
+    doc.text(p.latin, col1, y);
+    doc.text(p.nl, col2, y);
+    y += rowH;
+  }
+
+  // Footer + QR
+  const footerY = H - 8;
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  setBlack();
+  doc.text("© 2026 Robbe Wulgaert · aiindeklas.be", margin, footerY);
+
+  // QR code image: ./media/rota_qr.png
+  try{
+    const qrDataUrl = await loadPngAsDataUrl("./media/rota_qr.png");
+    const qrSize = 18; // mm
+    const qrX = W - margin - qrSize;
+    const qrY = H - margin - qrSize;
+    doc.addImage(qrDataUrl, "PNG", qrX, qrY, qrSize, qrSize);
+  }catch(e){
+    // If QR loading fails, keep PDF usable
+    console.warn("QR toevoegen mislukt:", e);
+  }
+
+  return doc;
+}
 
     btnPrintable?.addEventListener('click', () => {
       try{
@@ -2735,6 +2792,7 @@ function buildResetGateSequence(){
   </script>
 </body>
 </html>
+
 
 
 
