@@ -1762,17 +1762,27 @@ assets:
   setBlack();
   doc.text("© 2026 Robbe Wulgaert · aiindeklas.be", margin, footerY);
 
-  // QR code image: ./media/rota_qr.png
-  try{
-    const qrDataUrl = await loadPngAsDataUrl("./media/rota_qr.png");
-    const qrSize = 18; // mm
-    const qrX = W - margin - qrSize;
-    const qrY = H - margin - qrSize;
-    doc.addImage(qrDataUrl, "PNG", qrX, qrY, qrSize, qrSize);
-  }catch(e){
-    // If QR loading fails, keep PDF usable
-    console.warn("QR toevoegen mislukt:", e);
-  }
+try{
+  const qrDataUrl = await loadPngAsDataUrl("./media/rota_qr.png");
+
+  const props = doc.getImageProperties(qrDataUrl);
+  const imgW = props.width;
+  const imgH = props.height;
+
+  const maxBoxW = 22; // mm (tweak)
+  const maxBoxH = 22; // mm (tweak)
+
+  const scale = Math.min(maxBoxW / imgW, maxBoxH / imgH);
+  const w = imgW * scale;
+  const h = imgH * scale;
+
+  const x = W - margin - w;
+  const y = H - margin - h;
+
+  doc.addImage(qrDataUrl, "PNG", x, y, w, h);
+}catch(e){
+  console.warn("QR toevoegen mislukt:", e);
+}
 
   return doc;
 }
@@ -2792,6 +2802,7 @@ function buildResetGateSequence(){
   </script>
 </body>
 </html>
+
 
 
 
