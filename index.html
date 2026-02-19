@@ -19,15 +19,11 @@
   <link rel="manifest" href="site.webmanifest">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Rota">
-  <!-- iOS Home Screen icon (Add to Home Screen) -->
   <link rel="apple-touch-icon" sizes="180x180" href="./rota_app_icon.PNG?v=1">
   <link rel="apple-touch-icon" sizes="167x167" href="./rota_app_iconPNG?v=1">
   <link rel="apple-touch-icon" sizes="152x152" href="./rota_app_icon.PNG?v=1">
 
-  <!-- Optional: prevent iOS from applying gloss/rounding heuristics too aggressively -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Rota">
 
   <style>
     :root{
@@ -278,7 +274,7 @@
     .puck.available.p1{ background:var(--p1); }
     .puck.available.p2{ background:var(--p2); }
 
-    /* Board */
+
     .boardWrap{
       background:var(--panel);
       border:1px solid var(--border);
@@ -511,9 +507,7 @@
       min-width:0;
       flex:1;
     }
-    .choice .choice-left b{
-      font-weight:900;
-    }
+    .choice .choice-left b{ font-weight:900; }
     .choice .choice-audio{
       width:38px;
       height:38px;
@@ -598,6 +592,7 @@
       border-color:#d7d2fb;
     }
 
+   
     .help-btn{
       position:fixed;
       right:32px;
@@ -631,10 +626,7 @@
       background:#fff;
       color:var(--ink);
       border-radius:14px;
-
-      /* iOS safe-area: push content below the status bar */
       padding: calc(2.0rem + env(safe-area-inset-top, 0px)) 1.8rem 1.4rem 1.8rem;
-
       width:960px;
       max-width:98vw;
       box-shadow:0 6px 40px rgba(82,0,255,0.17);
@@ -642,7 +634,7 @@
       display:flex;
       gap:1.6rem;
       flex-direction:row;
-      overflow-x:hidden; /* prevents odd horizontal scrollbars */
+      overflow-x:hidden;
     }
     .help-left{ width:44%; min-width:240px; max-height:74vh; overflow-y:auto; }
     .help-right{ width:56%; min-width:240px; max-height:74vh; overflow-y:auto; }
@@ -656,10 +648,7 @@
 
     .close-help{
       position:absolute;
-
-      /* iOS safe-area: keep close button tappable */
       top: calc(0.9rem + env(safe-area-inset-top, 0px));
-
       right:0.9rem;
       background:none;
       border:none;
@@ -714,6 +703,7 @@
       gap:10px;
       flex-wrap:wrap;
       margin-top:12px;
+      align-items:center;
     }
     .select{
       height:40px;
@@ -733,19 +723,32 @@
       gap:10px;
     }
 
-    /* Klasmodus toggle (help modal) */
-    .helpToggleRow{
-      margin-top:12px;
-      padding-top:12px;
-      border-top:1px solid var(--border);
+    .toggleRow{
+      width:100%;
       display:flex;
       align-items:center;
       justify-content:space-between;
       gap:12px;
+      padding:10px 12px;
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:#fff;
+      box-shadow:0 1px 10px rgba(0,0,0,0.02);
     }
-    .helpToggleLabel{
+    .toggleLabel{
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+      min-width:0;
+    }
+    .toggleLabel b{
       font-weight:900;
       color:var(--ink);
+    }
+    .toggleLabel span{
+      font-size:0.92rem;
+      color:var(--muted);
+      font-weight:800;
       line-height:1.25;
     }
     .switch{
@@ -756,39 +759,89 @@
     }
     .switch input{
       opacity:0;
-      width:0;
-      height:0;
+      width:0; height:0;
     }
     .slider{
       position:absolute;
-      inset:0;
       cursor:pointer;
+      inset:0;
       background:#e9e6fb;
-      border:1px solid var(--border);
-      transition:160ms ease;
+      border:1px solid #dedaf8;
       border-radius:999px;
-      box-shadow:0 1px 10px rgba(0,0,0,0.03);
+      transition: all 160ms ease;
     }
     .slider:before{
       content:"";
       position:absolute;
-      height:26px;
-      width:26px;
-      left:3px;
-      top:50%;
-      transform:translateY(-50%);
+      height:26px; width:26px;
+      left:3px; top:2px;
       background:#fff;
       border-radius:50%;
-      transition:160ms ease;
-      box-shadow:0 6px 16px rgba(0,0,0,0.10);
+      box-shadow:0 6px 14px rgba(0,0,0,0.08);
+      transition: transform 160ms ease;
     }
     .switch input:checked + .slider{
-      background:rgba(82,0,255,0.20);
-      border-color:rgba(82,0,255,0.35);
+      background: rgba(82,0,255,0.22);
+      border-color: rgba(82,0,255,0.30);
     }
     .switch input:checked + .slider:before{
-      transform:translate(22px, -50%);
+      transform: translateX(22px);
     }
+
+    .cm-modal{
+      display:none;
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,0.52);
+      z-index:2100;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+    }
+    .cm-modal.active{ display:flex; }
+    .cm-card{
+      width:min(560px, 98vw);
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:18px;
+      box-shadow:0 24px 80px rgba(0,0,0,0.25);
+      padding:16px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      position:relative;
+    }
+    .cm-card h3{
+      margin:0;
+      font-size:1.05rem;
+      font-weight:900;
+      color:var(--brand-purple);
+    }
+    .cm-card p{
+      margin:0;
+      color:var(--muted);
+      font-weight:800;
+      line-height:1.35;
+    }
+    .cm-actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    .cm-close{
+      position:absolute;
+      top:10px;
+      right:10px;
+      border:none;
+      background:#fff;
+      cursor:pointer;
+      font-weight:900;
+      color:var(--ink);
+      padding:8px 10px;
+      border-radius:12px;
+    }
+    .cm-close:hover{ background:#f3f5f8; }
 
     @media (max-width: 600px){
       .help-modal{
@@ -822,7 +875,6 @@
       }
     }
 
-    /* Layout modes */
     body.mode-desktop .main{ grid-template-columns: 320px minmax(280px, 1fr) 320px; }
     body.mode-desktop .tabletTop, body.mode-desktop .tabletBottom{ display:none; }
 
@@ -990,9 +1042,6 @@ latin_learning:
       english: "I’m ready. (girl speaking)"
       drill_modes: ["word_order"]
 
-    # === PATCH: keep id-based naming for audio and sequences ===
-    # id stays "finis_ludi" (used for audio filename: finis_ludi.mp3)
-    # diacritics only in display text
     - id: "finis_ludi"
       latin: "Finis ludi."
       english: "End of the game."
@@ -1092,7 +1141,6 @@ assets:
     </section>
 
     <main class="main">
-      <!-- Left side (desktop) -->
       <aside class="panel side" id="side-left">
         <h3>Speler 1</h3>
         <div class="playerCard" id="card-p1">
@@ -1124,7 +1172,6 @@ assets:
         </div>
       </aside>
 
-      <!-- Center -->
       <section class="boardWrap" aria-label="Rota bord">
         <div class="board" id="board" role="application" aria-label="Rota speelveld">
           <svg viewBox="0 0 400 400" aria-hidden="true">
@@ -1146,7 +1193,6 @@ assets:
         </div>
       </section>
 
-      <!-- Right side (desktop) -->
       <aside class="panel side" id="side-right">
         <h3>Speler 2</h3>
         <div class="playerCard" id="card-p2">
@@ -1177,7 +1223,6 @@ assets:
       </aside>
     </main>
 
-    <!-- Tablet tabletop: bottom player indicator (speler 1) -->
     <section class="tabletBottom" id="tabletBottom">
       <div class="playerCard" id="t-card-p1">
         <div class="playerRow">
@@ -1201,10 +1246,8 @@ assets:
     </section>
   </div>
 
-  <!-- Help button -->
   <button id="help-btn" class="help-btn" type="button" aria-label="Hulp">?</button>
 
-  <!-- Help modal -->
   <div id="help-modal" class="help-modal" role="dialog" aria-modal="true" aria-labelledby="help-title">
     <div class="help-content" role="document">
       <button id="close-help" class="close-help" type="button">Sluiten ✕</button>
@@ -1224,15 +1267,17 @@ assets:
           </select>
 
           <button class="btn" id="btn-printable" type="button">Maak printbare versie</button>
-        </div>
 
-        <!-- PATCH: klasmodus toggle -->
-        <div class="helpToggleRow">
-          <div class="helpToggleLabel">Schakel klasmodus in/uit</div>
-          <label class="switch" aria-label="Schakel klasmodus in of uit">
-            <input id="classmode-toggle" type="checkbox">
-            <span class="slider"></span>
-          </label>
+          <div class="toggleRow" aria-label="Klasmodus">
+            <div class="toggleLabel">
+              <b>Schakel klasmodus in/uit</b>
+              <span>Geen start-quiz bij nieuw spel.</span>
+            </div>
+            <label class="switch">
+              <input id="classmode-toggle" type="checkbox" />
+              <span class="slider"></span>
+            </label>
+          </div>
         </div>
       </div>
 
@@ -1243,6 +1288,18 @@ assets:
         </div>
         <div style="height:10px"></div>
         <div id="help-latin"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="cm-modal" class="cm-modal" role="dialog" aria-modal="true" aria-labelledby="cm-title">
+    <div class="cm-card" role="document">
+      <button id="cm-close" class="cm-close" type="button">Sluiten ✕</button>
+      <h3 id="cm-title">Nieuw spel</h3>
+      <p>Zijn de spelers dezelfde of andere?</p>
+      <div class="cm-actions">
+        <button class="btn" id="cm-same" type="button">Zelfde spelers</button>
+        <button class="btn primary" id="cm-different" type="button">Andere spelers</button>
       </div>
     </div>
   </div>
@@ -1465,21 +1522,11 @@ assets:
     }
 
     const MODE_KEY = "rota_mode_override_v1";
-
     function getModeOverride(){
       try{ return localStorage.getItem(MODE_KEY) || "auto"; }catch(e){ return "auto"; }
     }
     function setModeOverride(v){
       try{ localStorage.setItem(MODE_KEY, v); }catch(e){}
-    }
-
-    /* PATCH: klasmodus persistent toggle */
-    const CLASSMODE_KEY = "rota_class_mode_v1";
-    function getClassMode(){
-      try{ return localStorage.getItem(CLASSMODE_KEY) === "1"; }catch(e){ return false; }
-    }
-    function setClassMode(on){
-      try{ localStorage.setItem(CLASSMODE_KEY, on ? "1" : "0"); }catch(e){}
     }
 
     function applyModeClass(mode){
@@ -1509,6 +1556,14 @@ assets:
     }
     window.addEventListener('resize', setModeClass);
     setModeClass();
+
+    const CLASS_MODE_KEY = "rota_class_mode_v1";
+    function isClassMode(){
+      try{ return localStorage.getItem(CLASS_MODE_KEY) === "1"; }catch(e){ return false; }
+    }
+    function setClassMode(on){
+      try{ localStorage.setItem(CLASS_MODE_KEY, on ? "1" : "0"); }catch(e){}
+    }
 
     const STORE_KEY = CFG?.latin_learning?.practice_engine?.persistence?.store_key || "rota_latin_progress_v1";
     function nowIso(){ return new Date().toISOString(); }
@@ -1563,8 +1618,7 @@ assets:
     const helpCulture = document.getElementById('help-culture');
     const modeSelect = document.getElementById('mode-select');
 
-    /* PATCH: klasmodus toggle element */
-    const classModeToggle = document.getElementById('classmode-toggle');
+    const classToggle = document.getElementById('classmode-toggle');
 
     let lastFocus = null;
 
@@ -1634,8 +1688,7 @@ assets:
       const ov = getModeOverride();
       if (modeSelect) modeSelect.value = ov;
 
-      /* PATCH: sync klasmodus toggle state */
-      if (classModeToggle) classModeToggle.checked = getClassMode();
+      if (classToggle) classToggle.checked = isClassMode();
 
       lastFocus = document.activeElement;
       helpModal.classList.add('active');
@@ -1663,10 +1716,9 @@ assets:
       });
     }
 
-    /* PATCH: persist klasmodus toggle changes */
-    if (classModeToggle){
-      classModeToggle.addEventListener('change', () => {
-        setClassMode(!!classModeToggle.checked);
+    if (classToggle){
+      classToggle.addEventListener('change', () => {
+        setClassMode(!!classToggle.checked);
       });
     }
 
@@ -1681,6 +1733,49 @@ assets:
 
     const btnPrintable = document.getElementById('btn-printable');
 
+
+    const WORKSHOP_PDF_NAME = "Workshop_Latijn_Werkblaadje_Rota.pdf";
+    const WORKSHOP_PDF_URL  = "./media/" + WORKSHOP_PDF_NAME;
+
+    async function workshopPdfExists(url){
+      try{
+        const r = await fetch(url, { method: "HEAD", cache: "no-store" });
+        if (r.ok) return true;
+        if (r.status === 405 || r.status === 403) throw new Error("HEAD not allowed");
+        return false;
+      }catch(_){
+        try{
+          const r2 = await fetch(url, {
+            method: "GET",
+            headers: { "Range": "bytes=0-0" },
+            cache: "no-store"
+          });
+          return r2.ok;
+        }catch(_2){
+          return false;
+        }
+      }
+    }
+
+    function triggerFileDownload(url, filename){
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename || "";
+      a.rel = "noopener";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+
+    async function downloadExistingPdf(url, filename){
+      const res = await fetch(url, { cache: "no-store" });
+      if (!res.ok) throw new Error("PDF fetch failed: " + res.status);
+      const blob = await res.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      triggerFileDownload(objectUrl, filename);
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 15000);
+    }
+
     async function buildPrintablePdf(){
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
@@ -1690,7 +1785,6 @@ assets:
       const margin = 12;
 
       const PURPLE = [82, 0, 255]; // #5200FF
-
       const setPurple = () => doc.setTextColor(PURPLE[0], PURPLE[1], PURPLE[2]);
       const setBlack  = () => doc.setTextColor(0, 0, 0);
 
@@ -1706,7 +1800,6 @@ assets:
         });
       }
 
-      // Title
       doc.setFont("helvetica", "bold");
       doc.setFontSize(18);
       setPurple();
@@ -1715,11 +1808,7 @@ assets:
 
       doc.setFont("helvetica", "normal");
       doc.setFontSize(10);
-      doc.text(
-        "Speel offline met het bord hieronder. Noteer namen en gebruik de zinnenlijst tijdens het spelen.",
-        margin,
-        22
-      );
+      doc.text("Speel offline met het bord hieronder. Noteer namen en gebruik de zinnenlijst tijdens het spelen.", margin, 22);
 
       doc.setFont("helvetica", "bold");
       doc.setFontSize(11);
@@ -1760,7 +1849,6 @@ assets:
 
       let y = Math.max(124, boardBottom + 14);
 
-      // Spelregels heading (purple)
       doc.setFont("helvetica", "bold");
       doc.setFontSize(12);
       setPurple();
@@ -1782,7 +1870,6 @@ assets:
 
       y += 4;
 
-      // Latijnse zinnen heading (purple)
       doc.setFont("helvetica", "bold");
       doc.setFontSize(12);
       setPurple();
@@ -1838,7 +1925,6 @@ assets:
         y += rowH;
       }
 
-      // Footer + QR
       const footerY = H - 8;
 
       doc.setFont("helvetica", "normal");
@@ -1853,7 +1939,6 @@ assets:
         const imgW = props.width;
         const imgH = props.height;
 
-        /* Keep aspect ratio inside a mm box (handles non-square 480x400) */
         const maxBoxW = 22; // mm
         const maxBoxH = 22; // mm
 
@@ -1862,9 +1947,9 @@ assets:
         const h = imgH * scale;
 
         const x = W - margin - w;
-        const yy = H - margin - h;
+        const yImg = H - margin - h;
 
-        doc.addImage(qrDataUrl, "PNG", x, yy, w, h);
+        doc.addImage(qrDataUrl, "PNG", x, yImg, w, h);
       }catch(e){
         console.warn("QR toevoegen mislukt:", e);
       }
@@ -1873,6 +1958,16 @@ assets:
     }
 
     btnPrintable?.addEventListener('click', async () => {
+      // 1) voorkeur: workshop-PDF downloaden
+      try{
+        const exists = await workshopPdfExists(WORKSHOP_PDF_URL);
+        if (exists){
+          await downloadExistingPdf(WORKSHOP_PDF_URL, WORKSHOP_PDF_NAME);
+          return;
+        }
+      }catch(_){}
+
+      // 2) fallback: genereren
       try{
         const doc = await buildPrintablePdf();
         doc.save("rota-printversie.pdf");
@@ -2758,6 +2853,13 @@ assets:
       return { steps, labelPrefix: UI_TEXT.overlay_gate };
     }
 
+    function buildNameOnlySequence(){
+      return {
+        steps: [{ phrase_id: "mihi_nomen_est", drill: { type: "fill_blank_name" } }],
+        labelPrefix: UI_TEXT.overlay_gate
+      };
+    }
+
     function buildResetGateSequence(){
       const phrases = (CFG?.latin_learning?.phrases || []).filter(p => p && p.id);
 
@@ -2866,33 +2968,56 @@ assets:
       });
     });
 
-    const btnReset = document.getElementById('btn-reset');
 
-    /* PATCH: in klasmodus skip reset gate overlay */
-    btnReset.addEventListener('click', () => {
+    const cmModal = document.getElementById('cm-modal');
+    const cmClose = document.getElementById('cm-close');
+    const cmSame  = document.getElementById('cm-same');
+    const cmDiff  = document.getElementById('cm-different');
+
+    function openClassResetPrompt(){
+      if (!cmModal) return;
+      cmModal.classList.add('active');
+      cmDiff?.focus();
+    }
+    function closeClassResetPrompt(){
+      cmModal?.classList.remove('active');
+    }
+
+    cmClose?.addEventListener('click', closeClassResetPrompt);
+    cmModal?.addEventListener('click', (e) => { if (e.target === cmModal) closeClassResetPrompt(); });
+    document.addEventListener('keydown', (e) => {
+      if (!cmModal?.classList.contains('active')) return;
+      if (e.key === 'Escape') closeClassResetPrompt();
+    });
+
+    cmSame?.addEventListener('click', () => {
+      closeClassResetPrompt();
       resetState();
+      state.locked = false;
+      renderAll();
+    });
 
-      if (getClassMode()){
-        state.locked = false;
-        renderAll();
+    cmDiff?.addEventListener('click', () => {
+      closeClassResetPrompt();
+      resetState();
+      startSequence(buildNameOnlySequence());
+    });
+
+    const btnReset = document.getElementById('btn-reset');
+    btnReset.addEventListener('click', () => {
+      if (isClassMode()){
+        openClassResetPrompt();
         return;
       }
-
+      resetState();
       startSequence(buildResetGateSequence());
     });
 
     (function boot(){
       resetState();
-
-      /* PATCH: in klasmodus skip first-launch gate overlay */
-      if (getClassMode()){
-        state.locked = false;
-        renderAll();
-        return;
-      }
-
       const showGate = !!CFG?.game?.ui_hooks?.show_rule_overlay_on_first_launch;
-      if (showGate){
+
+      if (showGate && !isClassMode()){
         startSequence(buildPreMatchSequence());
       } else {
         state.locked = false;
