@@ -722,6 +722,7 @@
       margin-top:12px;
       align-items:center;
     }
+    
     .select{
       height:40px;
       padding:0 12px;
@@ -859,6 +860,7 @@
       border-radius:12px;
     }
     .cm-close:hover{ background:#f3f5f8; }
+    
 
         .sourceBox{
       margin-top:14px;
@@ -992,6 +994,10 @@
       padding:0;margin:-1px;
       overflow:hidden;clip:rect(0,0,0,0);
       border:0;
+    }
+    
+    .helpActions .sourceBox{
+      width:100%;
     }
   </style>
 </head>
@@ -1330,7 +1336,7 @@ assets:
         <h3 style="margin:0 0 6px 0;font-weight:900;">Hoe speel je Rota?</h3>
         <div id="help-howto"></div>
         <div class="help-hint" id="help-culture"></div>
-        <div id="help-source" class="sourceBox" aria-label="Bron en naamsvermelding"></div>
+        
 
         <div class="helpActions">
           <select class="select" id="mode-select" aria-label="Weergave kiezen">
@@ -1352,6 +1358,7 @@ assets:
               <span class="slider"></span>
             </label>
           </div>
+          <div id="help-source" class="sourceBox" aria-label="Bron en naamsvermelding"></div>
         </div>
       </div>
 
@@ -1808,7 +1815,7 @@ assets:
       setHTML(helpHowto, renderHowTo(CFG));
       setHTML(helpLatin, renderLatinTable(CFG));
       const bg = CFG?.game?.background?.short || "";
-      setHTML(helpCulture, bg ? `<b>Achtergrond:</b> ${escapeHtml(bg)}` : "");
+      setHTML(helpCulture, "");
 
       const helpSource = document.getElementById('help-source');
       setHTML(helpSource, renderSourceInfo(CFG));
