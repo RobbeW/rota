@@ -10,6 +10,19 @@
   <meta name="theme-color" content="#21201f" />
   <meta name="format-detection" content="telephone=no" />
   <title>Rota</title>
+  <meta name="author" content="Robbe Wulgaert" />
+  <meta name="copyright" content="Copyright 2026 Robbe Wulgaert" />
+  <meta name="publisher" content="AI in de Klas" />
+  <meta
+    name="license"
+    content="Vrij voor educatief gebruik mits expliciete naamsvermelding."
+  />
+
+  <meta name="citation_author" content="Robbe Wulgaert" />
+  <meta name="citation_title" content="Rota" />
+  <meta name="citation_publication_date" content="2026" />
+  <meta name="citation_publisher" content="AI in de Klas" />
+  <meta name="citation_public_url" content="https://aiindeklas.be/" />
 
   <link rel="icon" href="rota_app_icon.svg" type="image/svg+xml">
   <link rel="icon" href="rota_app_icon.PNG" type="image/png" sizes="512x512">
@@ -847,6 +860,51 @@
     }
     .cm-close:hover{ background:#f3f5f8; }
 
+        .sourceBox{
+      margin-top:14px;
+      padding:12px;
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:#fff;
+      box-shadow:0 1px 10px rgba(0,0,0,0.02);
+      font-size:0.94rem;
+      line-height:1.4;
+    }
+
+    .sourceBox h3{
+      margin:0 0 8px 0;
+      font-size:0.98rem;
+      font-weight:900;
+      color:var(--brand-purple);
+    }
+
+    .sourceBox p{
+      margin:0 0 7px 0;
+      color:var(--ink);
+      font-weight:700;
+    }
+
+    .sourceBox p:last-child{
+      margin-bottom:0;
+    }
+
+    .sourceBox .sourceMuted{
+      color:var(--muted);
+      font-weight:800;
+    }
+
+    .sourceBox code{
+      display:block;
+      margin-top:6px;
+      padding:8px 10px;
+      border-radius:10px;
+      background:#f3f5f8;
+      color:var(--ink);
+      font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size:0.86rem;
+      white-space:normal;
+    }
+
     @media (max-width: 600px){
       .help-modal{
         padding:10px;
@@ -946,8 +1004,15 @@ meta:
   purpose: "1v1 Rota-spel dat een klein setje Latijnse zinnen inoefent via korte micro-oefeningen (start/einde)."
   audience: "Beginners (secundair onderwijs)"
   ui_language: "nl"
-  latin_level: "very_light"
-  version: "1.2"
+  version: "1.3"
+  author:
+    name: "Robbe Wulgaert"
+    organisation: "AI in de Klas"
+    website: "https://aiindeklas.be/"
+    copyright_year: "2026"
+    usage: "Gebruik vrij voor educatie mits expliciete naamsvermelding."
+    attribution_required: "Bij kopiëren, herwerken, delen of tonen moet de naam van de auteur zichtbaar vermeld worden."
+    citation: "Wulgaert, R. (2026). Rota. AI in de Klas. https://aiindeklas.be/"
 
 theme:
   colors:
@@ -1265,6 +1330,7 @@ assets:
         <h3 style="margin:0 0 6px 0;font-weight:900;">Hoe speel je Rota?</h3>
         <div id="help-howto"></div>
         <div class="help-hint" id="help-culture"></div>
+        <div id="help-source" class="sourceBox" aria-label="Bron en naamsvermelding"></div>
 
         <div class="helpActions">
           <select class="select" id="mode-select" aria-label="Weergave kiezen">
@@ -1713,12 +1779,39 @@ assets:
           <tbody>${rows}</tbody>
         </table>`;
     }
+      function renderSourceInfo(cfg){
+      const a = cfg?.meta?.author || {};
+
+      const name = a.name || "Robbe Wulgaert";
+      const organisation = a.organisation || "AI in de Klas";
+      const website = a.website || "https://aiindeklas.be/";
+      const year = a.copyright_year || "2026";
+      const usage = a.usage || "Gebruik vrij voor educatie mits expliciete naamsvermelding.";
+      const required = a.attribution_required || "Naamsvermelding is verplicht bij gebruik, kopiëren of aanpassen.";
+      const citation = a.citation || `Wulgaert, R. (${year}). Rota. ${organisation}. ${website}`;
+
+      return `
+        <h3>Bron en naamsvermelding</h3>
+        <p><b>Auteur:</b> ${escapeHtml(name)}</p>
+        <p><b>Bron:</b> ${escapeHtml(organisation)} · ${escapeHtml(website)}</p>
+        <p><b>Gebruik:</b> ${escapeHtml(usage)}</p>
+        <p><b>Voorwaarde:</b> ${escapeHtml(required)}</p>
+        <p class="sourceMuted">
+          Gebruik bij voorkeur deze bronvermelding:
+          <code>${escapeHtml(citation)}</code>
+        </p>
+        <p class="sourceMuted">© ${escapeHtml(year)} ${escapeHtml(name)} · ${escapeHtml(organisation)}</p>
+      `;
+    }
 
     function openHelp(){
       setHTML(helpHowto, renderHowTo(CFG));
       setHTML(helpLatin, renderLatinTable(CFG));
       const bg = CFG?.game?.background?.short || "";
       setHTML(helpCulture, bg ? `<b>Achtergrond:</b> ${escapeHtml(bg)}` : "");
+
+      const helpSource = document.getElementById('help-source');
+      setHTML(helpSource, renderSourceInfo(CFG));
 
       if (AUDIO_CFG.enabled && helpLatin){
         helpLatin.querySelectorAll('button[data-audio]').forEach(b => { b.innerHTML = AUDIO_ICON_SVG; });
