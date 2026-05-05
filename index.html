@@ -1017,7 +1017,7 @@ meta:
     website: "https://robbewulgaert.be/"
     copyright_year: "2026"
     usage: "Gebruik vrij voor educatie mits expliciete naamsvermelding."
-    attribution_required: "Bij kopiëren, herwerken, delen of tonen moet de naam van de auteur zichtbaar vermeld worden."
+    attribution_required: "Bij kopiëren, herwerken, delen of gebruik moet de naam van de auteur zichtbaar vermeld worden."
     citation: "Wulgaert, R. (2026). Rota. AI in de Klas. https://robbewulgaert.be/"
 
 theme:
@@ -1787,29 +1787,28 @@ assets:
         </table>`;
     }
       function renderSourceInfo(cfg){
-      const a = cfg?.meta?.author || {};
 
-      const name = a.name || "Robbe Wulgaert";
-      const organisation = a.organisation || "AI in de Klas";
-      const website = a.website || "https://aiindeklas.be/";
-      const year = a.copyright_year || "2026";
-      const usage = a.usage || "Gebruik vrij voor educatie mits expliciete naamsvermelding.";
-      const required = a.attribution_required || "Naamsvermelding is verplicht bij gebruik, kopiëren of aanpassen.";
-      const citation = a.citation || `Wulgaert, R. (${year}). Rota. ${organisation}. ${website}`;
+        const a = cfg?.meta?.author || {};
 
-      return `
-        <h3>Bron en naamsvermelding</h3>
-        <p><b>Auteur:</b> ${escapeHtml(name)}</p>
-        <p><b>Bron:</b> ${escapeHtml(organisation)} · ${escapeHtml(website)}</p>
-        <p><b>Gebruik:</b> ${escapeHtml(usage)}</p>
-        <p><b>Voorwaarde:</b> ${escapeHtml(required)}</p>
-        <p class="sourceMuted">
-          Gebruik bij voorkeur deze bronvermelding:
-          <code>${escapeHtml(citation)}</code>
-        </p>
-        <p class="sourceMuted">© ${escapeHtml(year)} ${escapeHtml(name)} · ${escapeHtml(organisation)}</p>
-      `;
-    }
+  
+        const name = a.name || "Robbe Wulgaert";
+  
+        const organisation = a.organisation || "AI in de Klas";
+  
+        const website = a.website || "https://robbewulgaert.be/";
+  
+        const year = a.copyright_year || "2026";
+
+  
+        return `
+    <h3>Bron</h3>
+    <p>
+      © ${escapeHtml(year)} ${escapeHtml(name)} · ${escapeHtml(organisation)}.
+      De app en het werkblad mogen vrij gebruikt, gedeeld, herwerkt en aangepast worden voor educatieve doeleinden, mits zichtbare naamsvermelding.
+      <code>${escapeHtml(`Wulgaert, R. (${year}). Rota. ${organisation}. ${website}`)}</code>
+    </p>
+  `;
+}
 
     function openHelp(){
       setHTML(helpHowto, renderHowTo(CFG));
